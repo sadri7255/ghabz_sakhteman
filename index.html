@@ -15,6 +15,16 @@
     <!-- Vazirmatn Font -->
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
 
+    <!-- jsPDF for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- Vazirmatn Font for jsPDF (Base64 encoded) -->
+    <script src="https://cdn.jsdelivr.net/gh/alireza-ab/sahel-font@gh-pages/dist/vazir.js"></script>
+
+    <!-- SheetJS for Excel Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <style type="text/tailwindcss">
         @layer components {
             .action-btn {
@@ -24,22 +34,22 @@
                 @apply w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition;
             }
             .menu-item {
-                @apply block w-full text-right px-4 py-2 text-sm hover:bg-gray-100;
+                @apply block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100;
             }
             .modal-backdrop {
-                @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden;
+                @apply fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-opacity duration-300;
+            }
+            .modal-backdrop.visible {
+                @apply opacity-100 pointer-events-auto;
             }
             .modal-content {
-                @apply bg-white rounded-xl shadow-2xl p-6 relative;
+                @apply bg-white rounded-xl shadow-2xl p-6 relative w-full transform scale-95 transition-transform duration-300;
+            }
+            .modal-backdrop.visible .modal-content {
+                @apply scale-100;
             }
             .modal-close-btn {
-                @apply absolute top-3 left-4 text-gray-500 hover:text-gray-800 text-2xl font-bold;
-            }
-            .add-tier-btn {
-                @apply mt-3 bg-blue-500 text-white text-sm px-3 py-1 rounded-md hover:bg-blue-600 transition;
-            }
-            .tier-input {
-                @apply p-1 border rounded text-center bg-gray-50 w-24;
+                @apply absolute top-4 left-4 text-gray-400 hover:text-gray-800 text-2xl font-bold;
             }
         }
     </style>
@@ -47,13 +57,6 @@
     <style>
         body, input, button, select, textarea {
             font-family: 'Vazirmatn', sans-serif;
-        }
-        .modal-enter {
-            animation: fadeIn 0.3s ease-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
         }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -88,13 +91,13 @@
                         <span>عملیات</span>
                     </button>
                     <div id="actions-menu" class="absolute top-full mt-2 left-0 w-56 bg-white rounded-lg shadow-xl border hidden z-10">
-                        <ul class="text-gray-700">
+                        <ul class="text-gray-700 py-1">
                             <li><a href="#" id="save-period-btn" class="menu-item">ذخیره دوره</a></li>
                             <li><a href="#" id="new-period-btn" class="menu-item">شروع دوره جدید</a></li>
-                            <li class="border-t"></li>
+                            <li class="border-t my-1"></li>
                             <li><a href="#" id="export-pdf-btn" class="menu-item">خروجی PDF</a></li>
                             <li><a href="#" id="export-excel-btn" class="menu-item">خروجی Excel</a></li>
-                            <li class="border-t"></li>
+                            <li class="border-t my-1"></li>
                             <li><a href="#" id="backup-btn" class="menu-item">دریافت پشتیبان</a></li>
                             <li><label for="restore-input" class="menu-item cursor-pointer">بازیابی پشتیبان</label></li>
                         </ul>
@@ -154,54 +157,55 @@
 
     <!-- Modals -->
     <div id="settings-modal" class="modal-backdrop">
-        <div class="modal-content w-full max-w-2xl modal-enter">
-            <button id="close-settings-modal" class="modal-close-btn">&times;</button>
-            <h2 class="text-xl font-bold mb-4 text-gray-800">تنظیمات محاسبه هزینه</h2>
-            <div class="mb-4 p-2 bg-gray-100 rounded-lg flex justify-center gap-4">
-                <label class="cursor-pointer"><input type="radio" name="calc-mode" value="manual" class="ml-1"> پلکانی دستی</label>
-                <label class="cursor-pointer"><input type="radio" name="calc-mode" value="auto" class="ml-1"> تنظیم خودکار</label>
+        <div class="modal-content max-w-2xl">
+            <button class="modal-close-btn">&times;</button>
+            <h2 class="text-xl font-bold mb-2 text-gray-800">تنظیمات محاسبه هزینه</h2>
+            <p class="text-sm text-gray-500 mb-6">در این بخش می‌توانید روش محاسبه و تعرفه پله‌های مصرف را تعیین کنید.</p>
+            
+            <div class="mb-4 p-1 bg-gray-100 rounded-lg flex justify-center gap-2">
+                <label class="w-full text-center py-2 rounded-md cursor-pointer transition"><input type="radio" name="calc-mode" value="manual" class="hidden"> پلکانی دستی</label>
+                <label class="w-full text-center py-2 rounded-md cursor-pointer transition"><input type="radio" name="calc-mode" value="auto" class="hidden"> تنظیم خودکار</label>
             </div>
+
             <div id="manual-settings">
-                <p class="text-sm text-gray-600 mb-3">تعرفه هر پلکان مصرف را به تومان وارد کنید.</p>
-                <div id="manual-tiers-container" class="overflow-x-auto"></div>
-                <button id="add-manual-tier-btn" class="add-tier-btn">+ افزودن پلکان</button>
+                <div id="manual-tiers-container" class="space-y-3"></div>
+                <button id="add-manual-tier-btn" class="mt-4 flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-semibold">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    افزودن پلکان
+                </button>
             </div>
             <div id="auto-settings" class="hidden">
-                <p class="text-sm text-gray-600 mb-3">برای هر پله مصرف، یک ضریب تعریف کنید.</p>
-                <div id="auto-tiers-container" class="overflow-x-auto"></div>
-                <button id="add-auto-tier-btn" class="add-tier-btn">+ افزودن پلکان</button>
+                <div id="auto-tiers-container" class="space-y-3"></div>
+                <button id="add-auto-tier-btn" class="mt-4 flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-semibold">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    افزودن پلکان
+                </button>
             </div>
             <hr class="my-6">
-            <button id="save-settings-btn" class="w-full bg-green-600 text-white py-2 rounded-lg shadow hover:bg-green-700 transition">ذخیره تنظیمات</button>
+            <button id="save-settings-btn" class="w-full bg-green-600 text-white py-2.5 rounded-lg shadow hover:bg-green-700 transition font-bold">ذخیره تنظیمات</button>
         </div>
     </div>
 
     <div id="history-modal" class="modal-backdrop">
-        <div class="modal-content w-full max-w-2xl max-h-[80vh] flex flex-col modal-enter">
-            <button id="close-history-modal" class="modal-close-btn">&times;</button>
+        <div class="modal-content max-w-xl max-h-[80vh] flex flex-col">
+            <button class="modal-close-btn">&times;</button>
             <h2 class="text-xl font-bold mb-4 text-gray-800">تاریخچه دوره‌ها</h2>
-            <div id="history-container" class="overflow-y-auto"></div>
+            <div id="history-container" class="overflow-y-auto pr-2"></div>
         </div>
     </div>
     
     <div id="message-modal" class="modal-backdrop z-[100]">
-        <div class="modal-content w-full max-w-sm text-center modal-enter">
+        <div class="modal-content max-w-sm text-center">
             <p id="message-text" class="mb-6 text-gray-700"></p>
             <div id="message-buttons" class="flex justify-center gap-4"></div>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // آدرس API که فایل‌های PHP روی آن قرار دارند
-            // !!! مهم: این آدرس را با آدرس واقعی سرور خود جایگزین کنید
             const API_URL = 'https://group2.storage.c2.liara.space/mahdi_sakhteman/api/';
 
-            // تمام عناصر صفحه که با آنها کار می‌کنیم
             const DOM = {
                 tableBody: document.getElementById('table-body'),
                 totalConsumption: document.getElementById('total-consumption'),
@@ -210,30 +214,31 @@
                 periodNameInput: document.getElementById('period-name'),
                 billDateInput: document.getElementById('bill-date'),
                 totalBillAmountInput: document.getElementById('total-bill-amount'),
+                actionsMenuBtn: document.getElementById('actions-menu-btn'),
+                actionsMenu: document.getElementById('actions-menu'),
+                restoreInput: document.getElementById('restore-input'),
+                // Modals
                 settingsModal: document.getElementById('settings-modal'),
                 historyModal: document.getElementById('history-modal'),
                 messageModal: document.getElementById('message-modal'),
+                // Settings Modal elements
                 manualSettings: document.getElementById('manual-settings'),
                 autoSettings: document.getElementById('auto-settings'),
                 manualTiersContainer: document.getElementById('manual-tiers-container'),
                 autoTiersContainer: document.getElementById('auto-tiers-container'),
+                // History Modal elements
                 historyContainer: document.getElementById('history-container'),
+                // Message Modal elements
                 messageText: document.getElementById('message-text'),
                 messageButtons: document.getElementById('message-buttons'),
-                restoreInput: document.getElementById('restore-input'),
-                actionsMenuBtn: document.getElementById('actions-menu-btn'),
-                actionsMenu: document.getElementById('actions-menu'),
             };
 
-            // متغیر اصلی برای نگهداری تمام داده‌های برنامه
             let state = {};
 
-            // توابع کمکی برای کار با اعداد فارسی و انگلیسی
             const toEnglishDigits = str => String(str).replace(/[\u0660-\u0669\u06F0-\u06F9]/g, c => c.charCodeAt(0) & 0xf);
             const getRawNumber = formattedStr => parseFloat(toEnglishDigits(String(formattedStr)).replace(/[,٬]/g, '')) || 0;
             const formatNumber = num => isNaN(num) ? '۰' : Math.round(num).toLocaleString('fa-IR');
 
-            // تابع نمایش پیام سفارشی
             function showMessage(text, buttons = [{ text: 'باشه', class: 'bg-blue-500', resolveValue: true }]) {
                 return new Promise(resolve => {
                     DOM.messageText.textContent = text;
@@ -242,53 +247,46 @@
                         const button = document.createElement('button');
                         button.textContent = btnInfo.text;
                         button.className = `text-white px-6 py-2 rounded-lg shadow hover:opacity-90 transition ${btnInfo.class}`;
-                        button.onclick = () => { DOM.messageModal.classList.add('hidden'); resolve(btnInfo.resolveValue); };
+                        button.onclick = () => { DOM.messageModal.classList.remove('visible'); resolve(btnInfo.resolveValue); };
                         DOM.messageButtons.appendChild(button);
                     });
-                    DOM.messageModal.classList.remove('hidden');
+                    DOM.messageModal.classList.add('visible');
                 });
             }
 
-            // ارتباط با سرور برای ذخیره اطلاعات
-            async function saveState() {
+            async function apiCall(endpoint, options = {}) {
                 try {
-                    const response = await fetch(API_URL + 'save_data.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(state),
-                    });
+                    const response = await fetch(API_URL + endpoint, options);
                     if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.message || 'Network response was not ok');
+                        const errorData = await response.json().catch(() => ({ message: 'خطای ناشناخته در سرور' }));
+                        throw new Error(errorData.message || `Network response was not ok (${response.status})`);
                     }
-                    console.log("State saved successfully.");
+                    return response.json();
                 } catch (error) {
-                    console.error('Failed to save state to server:', error);
-                    showMessage(`خطا در ذخیره اطلاعات در سرور: ${error.message}`);
+                    console.error(`API call to ${endpoint} failed:`, error);
+                    showMessage(`خطا در ارتباط با سرور: ${error.message}. لطفاً اتصال اینترنت خود را بررسی کنید.`);
+                    throw error; // Re-throw to stop further execution if critical
                 }
             }
 
-            // ارتباط با سرور برای خواندن اطلاعات
+            const saveState = () => apiCall('save_data.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(state),
+            });
+
             async function loadState() {
                 try {
-                    const response = await fetch(API_URL + 'get_data.php');
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    const serverState = await response.json();
-                    
-                    // اطمینان از وجود ساختار صحیح
+                    const serverState = await apiCall('get_data.php');
                     if (!serverState.units || !serverState.settings || !serverState.periodInfo) {
                         throw new Error('Invalid data structure from server');
                     }
                     state = serverState;
-
                 } catch (error) {
-                    console.error('Failed to load state from server:', error);
-                    showMessage('خطا در ارتباط با سرور. لطفا از اتصال اینترنت خود مطمئن شوید و صفحه را رفرش کنید.');
-                    // در صورت خطا، یک حالت پیش‌فرض خالی ایجاد می‌کنیم تا برنامه از کار نیفتد
                     state = {
                         units: Array.from({ length: 66 }, (_, i) => ({ id: i + 1, name: i === 64 ? 'عمومی' : (i === 65 ? 'تجاری' : `واحد ${i + 1}`), prev: 0, current: 0 })),
                         periodInfo: { name: '', date: '', totalBill: 0 },
-                        settings: { calculationMode: 'manual', manualTiers: [{from: 0, to: Infinity, rate: 0}], autoTiers: [{from: 0, to: Infinity, coefficient: 1}] }
+                        settings: { calculationMode: 'manual', manualTiers: [{ to: 5, rate: 1000 }, { to: 10, rate: 1500 }], autoTiers: [{ to: 10, coefficient: 1 }, { to: 20, coefficient: 1.5 }] }
                     };
                 }
             }
@@ -320,38 +318,58 @@
             }
 
             function renderSettingsModal() {
-                document.querySelector(`input[name="calc-mode"][value="${state.settings.calculationMode}"]`).checked = true;
-                updateSettingsView();
+                const mode = state.settings.calculationMode;
+                document.querySelector(`input[name="calc-mode"][value="${mode}"]`).checked = true;
                 
                 const renderTiers = (container, tiers, mode) => {
                     const isManual = mode === 'manual';
-                    const headers = `<thead class="bg-gray-100 text-xs text-gray-600"><tr><th class="p-2">پله</th><th class="p-2">از (متر مکعب)</th><th class="p-2">تا (متر مکعب)</th><th class="p-2">${isManual ? 'تعرفه (تومان)' : 'ضریب'}</th><th class="p-2"></th></tr></thead>`;
-                    
-                    const body = tiers.map((tier, index) => {
-                        const fromValue = index === 0 ? 0 : (tiers[index-1]?.to || 0);
-                        return `<tr class="tier">
-                                <td class="p-2 font-bold">${formatNumber(index + 1)}</td>
-                                <td class="p-2"><input type="text" class="tier-input" value="${formatNumber(fromValue)}" readonly></td>
-                                <td class="p-2"><input type="text" inputmode="numeric" class="tier-input" data-tier-field="to" placeholder="∞" value="${tier.to === Infinity || tier.to === null ? '' : formatNumber(tier.to)}"></td>
-                                <td class="p-2"><input type="text" inputmode="numeric" class="tier-input" data-tier-field="${isManual ? 'rate' : 'coefficient'}" step="${isManual ? '1' : '0.1'}" value="${tier[isManual ? 'rate' : 'coefficient'] ? formatNumber(tier[isManual ? 'rate' : 'coefficient']) : ''}"></td>
-                                <td class="p-2"><button class="remove-tier-btn text-red-500 hover:text-red-700 font-bold text-xl" data-mode="${mode}" data-index="${index}">&times;</button></td>
-                            </tr>`;
+                    container.innerHTML = (tiers || []).map((tier, index) => {
+                        const fromValue = index === 0 ? 0 : (tiers[index - 1]?.to || 0);
+                        return `
+                        <div class="tier-row grid grid-cols-12 gap-2 items-center p-2 rounded-lg bg-gray-50" data-index="${index}">
+                            <div class="col-span-1 text-sm font-bold text-gray-500">پله ${formatNumber(index + 1)}</div>
+                            <div class="col-span-3">
+                                <label class="text-xs text-gray-500">از (متر مکعب)</label>
+                                <input type="text" class="w-full p-2 border rounded-md bg-white" value="${formatNumber(fromValue)}" readonly>
+                            </div>
+                            <div class="col-span-3">
+                                <label class="text-xs text-gray-500">تا (متر مکعب)</label>
+                                <input type="text" inputmode="numeric" class="w-full p-2 border rounded-md bg-white" data-tier-field="to" placeholder="∞" value="${tier.to === Infinity || tier.to === null ? '' : formatNumber(tier.to)}">
+                            </div>
+                            <div class="col-span-4">
+                                <label class="text-xs text-gray-500">${isManual ? 'تعرفه (تومان)' : 'ضریب'}</label>
+                                <input type="text" inputmode="numeric" class="w-full p-2 border rounded-md bg-white" data-tier-field="${isManual ? 'rate' : 'coefficient'}" value="${tier[isManual ? 'rate' : 'coefficient'] ? formatNumber(tier[isManual ? 'rate' : 'coefficient']) : ''}">
+                            </div>
+                            <div class="col-span-1 flex justify-end">
+                                <button class="remove-tier-btn text-red-400 hover:text-red-600 mt-5" data-mode="${mode}">&times;</button>
+                            </div>
+                        </div>`;
                     }).join('');
-
-                    container.innerHTML = `<table class="w-full text-center text-sm">${headers}<tbody>${body}</tbody></table>`;
                 };
                 
-                renderTiers(DOM.manualTiersContainer, state.settings.manualTiers || [], 'manual');
-                renderTiers(DOM.autoTiersContainer, state.settings.autoTiers || [], 'auto');
+                renderTiers(DOM.manualTiersContainer, state.settings.manualTiers, 'manual');
+                renderTiers(DOM.autoTiersContainer, state.settings.autoTiers, 'auto');
+                updateSettingsView();
             }
             
             function updateSettingsView() {
                 const mode = document.querySelector('input[name="calc-mode"]:checked').value;
+                document.querySelectorAll('input[name="calc-mode"]').forEach(radio => {
+                    const label = radio.parentElement;
+                    if (radio.value === mode) {
+                        label.classList.add('bg-blue-600', 'text-white', 'font-bold', 'shadow-md');
+                        label.classList.remove('bg-gray-100');
+                    } else {
+                        label.classList.remove('bg-blue-600', 'text-white', 'font-bold', 'shadow-md');
+                        label.classList.add('bg-gray-100');
+                    }
+                });
                 DOM.manualSettings.style.display = mode === 'manual' ? 'block' : 'none';
                 DOM.autoSettings.style.display = mode === 'auto' ? 'block' : 'none';
             }
 
             function calculateAll() {
+                // Calculation logic remains the same as previous correct version
                 const { units, settings, periodInfo } = state;
                 if (!units || !settings || !periodInfo) return; 
                 const totalBill = getRawNumber(periodInfo.totalBill);
@@ -428,7 +446,7 @@
                     row.classList.remove('bg-red-100', 'text-red-800');
                     consumptionCell.style.backgroundColor = 'transparent';
                     consumptionCell.style.color = 'inherit';
-                    consumptionCell.classList.remove('rounded-md', 'p-2', 'text-white');
+                    consumptionCell.classList.remove('rounded-md', 'p-1', 'text-white');
 
                     if (unit.consumption < 0) {
                         row.classList.add('bg-red-100', 'text-red-800');
@@ -446,7 +464,7 @@
                             const ratio = unit.consumption / maxConsumption;
                             const hue = 120 - (ratio * 120);
                             consumptionCell.style.backgroundColor = `hsl(${hue}, 80%, 60%)`;
-                            consumptionCell.classList.add('p-2', 'text-white', 'rounded-md');
+                            consumptionCell.classList.add('p-1', 'text-white', 'rounded-md');
                         }
                     }
                 });
@@ -490,8 +508,13 @@
                 document.getElementById('export-pdf-btn').addEventListener('click', exportToPDF);
                 document.getElementById('export-excel-btn').addEventListener('click', exportToExcel);
                 
-                document.getElementById('settings-btn').addEventListener('click', () => { renderSettingsModal(); DOM.settingsModal.classList.remove('hidden'); });
-                document.getElementById('close-settings-modal').addEventListener('click', () => DOM.settingsModal.classList.add('hidden'));
+                document.getElementById('settings-btn').addEventListener('click', () => { renderSettingsModal(); DOM.settingsModal.classList.add('visible'); });
+                document.getElementById('history-btn').addEventListener('click', showHistory);
+                
+                document.querySelectorAll('.modal-close-btn').forEach(btn => {
+                    btn.addEventListener('click', () => btn.closest('.modal-backdrop').classList.remove('visible'));
+                });
+                
                 document.querySelectorAll('input[name="calc-mode"]').forEach(radio => radio.addEventListener('change', updateSettingsView));
                 
                 DOM.settingsModal.addEventListener('click', e => {
@@ -502,7 +525,8 @@
                         state.settings.autoTiers.push({ to: Infinity, coefficient: 1 });
                         renderSettingsModal();
                     } else if (e.target.classList.contains('remove-tier-btn')) {
-                        const { mode, index } = e.target.dataset;
+                        const { mode } = e.target.dataset;
+                        const index = e.target.closest('.tier-row').dataset.index;
                         state.settings[mode === 'manual' ? 'manualTiers' : 'autoTiers'].splice(index, 1);
                         renderSettingsModal();
                     }
@@ -510,9 +534,6 @@
 
                 document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
                 
-                document.getElementById('history-btn').addEventListener('click', showHistory);
-                document.getElementById('close-history-modal').addEventListener('click', () => DOM.historyModal.classList.add('hidden'));
-
                 DOM.actionsMenuBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     DOM.actionsMenu.classList.toggle('hidden');
@@ -530,16 +551,12 @@
                 
                 const saveTiersFromContainer = (container, tierArrayName) => {
                     const tiers = [];
-                    container.querySelectorAll('.tier').forEach(row => {
-                        const toStr = row.cells[2].querySelector('input').value;
+                    container.querySelectorAll('.tier-row').forEach(row => {
+                        const toStr = row.querySelector('[data-tier-field="to"]').value;
                         const to = toStr === '' || toStr === '∞' ? Infinity : getRawNumber(toStr);
                         const tier = { to };
-                        const valueInput = row.cells[3].querySelector('input');
-                        if (tierArrayName === 'manualTiers') {
-                            tier.rate = getRawNumber(valueInput.value);
-                        } else {
-                            tier.coefficient = getRawNumber(valueInput.value);
-                        }
+                        const valueInput = row.querySelector(`[data-tier-field="${tierArrayName === 'manualTiers' ? 'rate' : 'coefficient'}"]`);
+                        tier[tierArrayName === 'manualTiers' ? 'rate' : 'coefficient'] = getRawNumber(valueInput.value);
                         tiers.push(tier);
                     });
                     state.settings[tierArrayName] = tiers;
@@ -548,10 +565,11 @@
                 saveTiersFromContainer(DOM.manualTiersContainer, 'manualTiers');
                 saveTiersFromContainer(DOM.autoTiersContainer, 'autoTiers');
                 
-                saveState();
-                calculateAll();
-                DOM.settingsModal.classList.add('hidden');
-                showMessage('تنظیمات با موفقیت ذخیره شد.');
+                saveState().then(() => {
+                    calculateAll();
+                    DOM.settingsModal.classList.remove('visible');
+                    showMessage('تنظیمات با موفقیت ذخیره شد.');
+                });
             }
 
             function downloadBackup() {
@@ -604,23 +622,16 @@
                     total_consumption: getRawNumber(DOM.totalConsumption.textContent),
                     units_data: JSON.stringify(state.units)
                 };
-
-                try {
-                    const response = await fetch(API_URL + 'save_history.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(periodData)
-                    });
-                    const result = await response.json();
-                    if (!result.success) throw new Error(result.message);
-                    await showMessage(`دوره "${state.periodInfo.name}" با موفقیت در تاریخچه ذخیره شد.`);
-                } catch(error) {
-                    await showMessage(`خطا در ذخیره تاریخچه: ${error.message}`);
-                }
+                await apiCall('save_history.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(periodData)
+                });
+                await showMessage(`دوره "${state.periodInfo.name}" با موفقیت در تاریخچه ذخیره شد.`);
             }
 
             async function startNewPeriod() {
-                const confirmed = await showMessage('آیا مطمئن هستید؟ قرائت فعلی به عنوان قرائت قبلی ثبت می‌شود.', [
+                const confirmed = await showMessage('آیا مطمئن هستید؟ قرائت فعلی به عنوان قرائت قبلی ثبت می‌شود و اطلاعات دوره پاک می‌شود.', [
                     { text: 'بله، دوره جدید', class: 'bg-green-500', resolveValue: true },
                     { text: 'خیر', class: 'bg-red-500', resolveValue: false }
                 ]);
@@ -635,24 +646,21 @@
 
             async function showHistory() {
                 try {
-                    const response = await fetch(API_URL + 'get_history.php');
-                    if (!response.ok) throw new Error('Could not fetch history');
-                    const history = await response.json();
-
+                    const history = await apiCall('get_history.php');
                     if (!history || history.length === 0) {
-                        DOM.historyContainer.innerHTML = '<p class="text-center text-slate-500">هنوز دوره‌ای ذخیره نشده است.</p>';
+                        DOM.historyContainer.innerHTML = '<p class="text-center text-slate-500 py-8">هنوز دوره‌ای ذخیره نشده است.</p>';
                     } else {
-                        DOM.historyContainer.innerHTML = `<ul class="space-y-3">${history.map(p => `
-                            <li class="p-3 bg-slate-100 rounded-lg flex justify-between items-center">
+                        DOM.historyContainer.innerHTML = `<div class="space-y-3">${history.map(p => `
+                            <div class="p-4 bg-slate-50 rounded-lg flex justify-between items-center border">
                                 <div>
                                     <strong class="text-slate-800">${p.period_name} (${p.bill_date})</strong>
-                                    <div class="text-sm text-slate-600">
+                                    <div class="text-sm text-slate-600 mt-1">
                                         <span>مصرف کل: ${formatNumber(p.total_consumption)}</span> | 
                                         <span>مبلغ کل: ${formatNumber(p.total_bill)} تومان</span>
                                     </div>
                                 </div>
-                                <button class="load-history-btn text-sm bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600" data-id="${p.id}">بارگذاری</button>
-                            </li>`).join('')}</ul>`;
+                                <button class="load-history-btn text-sm bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 shadow" data-id="${p.id}">بارگذاری</button>
+                            </div>`).join('')}</div>`;
                         
                         DOM.historyContainer.querySelectorAll('.load-history-btn').forEach(btn => btn.addEventListener('click', async e => {
                             const confirmed = await showMessage('آیا می‌خواهید این دوره بارگذاری شود؟ اطلاعات فعلی با اطلاعات این دوره جایگزین و در سرور ذخیره خواهد شد.', [
@@ -666,14 +674,14 @@
                                     state.periodInfo = { name: periodToLoad.period_name, date: periodToLoad.bill_date, totalBill: periodToLoad.total_bill };
                                     await saveState(); 
                                     render();
-                                    DOM.historyModal.classList.add('hidden');
+                                    DOM.historyModal.classList.remove('visible');
                                 }
                             }
                         }));
                     }
-                    DOM.historyModal.classList.remove('hidden');
+                    DOM.historyModal.classList.add('visible');
                 } catch (error) {
-                    showMessage(`خطا در دریافت تاریخچه: ${error.message}`);
+                    // Error message is already shown by apiCall
                 }
             }
             
@@ -681,13 +689,12 @@
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
                 
-                // Add Vazirmatn font (assuming it's loaded in the browser)
-                // This is a simplified way; for production, you'd embed the font file.
-                doc.addFont('Vazirmatn', 'Vazirmatn', 'normal');
+                doc.addFileToVFS('Vazirmatn-Regular.ttf', vazir);
+                doc.addFont('Vazirmatn-Regular.ttf', 'Vazirmatn', 'normal');
                 doc.setFont('Vazirmatn');
 
                 doc.text(`گزارش قبض دوره: ${state.periodInfo.name || 'نامشخص'}`, 105, 15, { align: 'center' });
-                doc.text(`تاریخ: ${state.periodInfo.date || '-'}`, 105, 22, { align: 'center' });
+                doc.text(`تاریخ: ${state.periodInfo.date || '-'} | مبلغ کل: ${formatNumber(state.periodInfo.totalBill)} تومان`, 105, 22, { align: 'center' });
                 
                 const tableData = state.units.map(u => [
                     formatNumber(u.finalCost),
@@ -697,7 +704,7 @@
                     formatNumber(u.prev),
                     u.name,
                     formatNumber(u.id)
-                ]);
+                ]).reverse(); // To display correctly with RTL
 
                 doc.autoTable({
                     startY: 30,
@@ -707,6 +714,10 @@
                     headStyles: { fillColor: [41, 128, 185], halign: 'center' },
                     columnStyles: { 
                         5: { halign: 'right' } // Align 'name' column to the right
+                    },
+                    didDrawPage: (data) => {
+                        // Correct RTL text for body
+                        doc.setLanguage('fa');
                     }
                 });
                 
