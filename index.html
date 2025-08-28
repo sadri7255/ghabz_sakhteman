@@ -73,7 +73,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path><path d="M12 22.07V12.5l-5.66-5.66"></path></svg>
                 <h1 class="text-2xl md:text-3xl font-bold text-blue-700">مدیریت هوشمند قبض آب</h1>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 relative">
                 <button id="settings-btn" class="action-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     <span>تنظیمات</span>
@@ -82,6 +82,25 @@
                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
                     <span>تاریخچه</span>
                 </button>
+                <div class="relative">
+                    <button id="actions-menu-btn" class="action-btn bg-blue-600 text-white hover:bg-blue-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M3 12h18"></path><path d="M3 18h18"></path></svg>
+                        <span>عملیات</span>
+                    </button>
+                    <div id="actions-menu" class="absolute top-full mt-2 left-0 w-56 bg-white rounded-lg shadow-xl border hidden z-10">
+                        <ul class="text-gray-700">
+                            <li><a href="#" id="save-period-btn" class="menu-item">ذخیره دوره</a></li>
+                            <li><a href="#" id="new-period-btn" class="menu-item">شروع دوره جدید</a></li>
+                            <li class="border-t"></li>
+                            <li><a href="#" id="export-pdf-btn" class="menu-item">خروجی PDF</a></li>
+                            <li><a href="#" id="export-excel-btn" class="menu-item">خروجی Excel</a></li>
+                            <li class="border-t"></li>
+                            <li><a href="#" id="backup-btn" class="menu-item">دریافت پشتیبان</a></li>
+                            <li><label for="restore-input" class="menu-item cursor-pointer">بازیابی پشتیبان</label></li>
+                        </ul>
+                        <input type="file" id="restore-input" accept=".json" class="hidden">
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -129,27 +148,6 @@
                         </tr>
                     </tfoot>
                 </table>
-            </div>
-
-            <!-- Actions Menu -->
-            <div class="mt-6 flex justify-center relative">
-                <button id="actions-menu-btn" class="bg-blue-600 text-white px-6 py-2.5 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M3 12h18"></path><path d="M3 18h18"></path></svg>
-                    عملیات
-                </button>
-                <div id="actions-menu" class="absolute bottom-full mb-2 w-56 bg-white rounded-lg shadow-xl border hidden">
-                    <ul class="text-gray-700">
-                        <li><a href="#" id="save-period-btn" class="menu-item">ذخیره دوره</a></li>
-                        <li><a href="#" id="new-period-btn" class="menu-item">شروع دوره جدید</a></li>
-                        <li class="border-t"></li>
-                        <li><a href="#" id="export-pdf-btn" class="menu-item">خروجی PDF</a></li>
-                        <li><a href="#" id="export-excel-btn" class="menu-item">خروجی Excel</a></li>
-                        <li class="border-t"></li>
-                        <li><a href="#" id="backup-btn" class="menu-item">دریافت پشتیبان</a></li>
-                        <li><label for="restore-input" class="menu-item cursor-pointer">بازیابی پشتیبان</label></li>
-                    </ul>
-                    <input type="file" id="restore-input" accept=".json" class="hidden">
-                </div>
             </div>
         </main>
     </div>
@@ -363,7 +361,8 @@
                             settings.manualTiers.forEach((tier, index) => {
                                 if (unit.consumption > tier.from) tierLevel = `پله ${formatNumber(index + 1)}`;
                                 if (remaining <= 0) return;
-                                const consumptionInTier = Math.min(remaining, (tier.to === 'Infinity' ? Infinity : tier.to) - tier.from);
+                                const tierTo = tier.to === 'Infinity' || tier.to === null ? Infinity : tier.to;
+                                const consumptionInTier = Math.min(remaining, tierTo - tier.from);
                                 cost += consumptionInTier * tier.rate;
                                 remaining -= consumptionInTier;
                             });
@@ -387,7 +386,8 @@
                         if (unit.consumption > 0) {
                             const applicableTier = settings.autoTiers.find((t, i) => {
                                 if (unit.consumption > t.from) tierLevel = `پله ${formatNumber(i + 1)}`;
-                                return unit.consumption > t.from && unit.consumption <= (t.to === 'Infinity' ? Infinity : t.to);
+                                const tierTo = t.to === 'Infinity' || t.to === null ? Infinity : t.to;
+                                return unit.consumption > t.from && unit.consumption <= tierTo;
                             }) || settings.autoTiers[settings.autoTiers.length - 1];
                             if (applicableTier) coefficient = applicableTier.coefficient;
                         }
@@ -448,12 +448,13 @@
                     callback(rawValue);
                     e.target.value = formatNumber(rawValue);
                     calculateAll();
-                    saveState();
                 };
+                
+                const debouncedSave = debounce(saveState, 1000); // Save state 1 second after user stops typing
 
-                DOM.totalBillAmountInput.addEventListener('input', e => handleNumericInput(e, rawValue => state.periodInfo.totalBill = rawValue));
-                DOM.periodNameInput.addEventListener('input', e => { state.periodInfo.name = e.target.value; saveState(); });
-                DOM.billDateInput.addEventListener('input', e => { state.periodInfo.date = e.target.value; saveState(); });
+                DOM.totalBillAmountInput.addEventListener('input', e => handleNumericInput(e, rawValue => { state.periodInfo.totalBill = rawValue; debouncedSave(); }));
+                DOM.periodNameInput.addEventListener('input', e => { state.periodInfo.name = e.target.value; debouncedSave(); });
+                DOM.billDateInput.addEventListener('input', e => { state.periodInfo.date = e.target.value; debouncedSave(); });
 
                 DOM.tableBody.addEventListener('input', e => {
                     if (e.target.matches('input')) {
@@ -461,7 +462,7 @@
                         const field = e.target.dataset.field;
                         const unit = state.units.find(u => u.id === id);
                         if (unit) {
-                            handleNumericInput(e, rawValue => unit[field] = rawValue);
+                            handleNumericInput(e, rawValue => { unit[field] = rawValue; debouncedSave(); });
                         }
                     }
                 });
@@ -479,10 +480,10 @@
                 
                 DOM.settingsModal.addEventListener('click', e => {
                     if (e.target.id === 'add-manual-tier-btn') {
-                        state.settings.manualTiers.push({});
+                        state.settings.manualTiers.push({ from: 0, to: Infinity, rate: 0 });
                         renderSettingsModal();
                     } else if (e.target.id === 'add-auto-tier-btn') {
-                        state.settings.autoTiers.push({});
+                        state.settings.autoTiers.push({ from: 0, to: Infinity, coefficient: 1 });
                         renderSettingsModal();
                     } else if (e.target.classList.contains('remove-tier-btn')) {
                         const { mode, index } = e.target.dataset;
@@ -522,7 +523,7 @@
                     container.querySelectorAll('.tier').forEach(row => {
                         const from = getRawNumber(row.cells[1].querySelector('input').value);
                         const toStr = row.cells[2].querySelector('input').value;
-                        const to = toStr === '' ? Infinity : getRawNumber(toStr);
+                        const to = toStr === '' || toStr === '∞' ? Infinity : getRawNumber(toStr);
                         const tier = { from, to };
                         const valueInput = row.cells[3].querySelector('input');
                         if (state.settings.calculationMode === 'manual') {
@@ -584,7 +585,6 @@
                     await showMessage('لطفاً نام دوره و تاریخ قبض را مشخص کنید.');
                     return;
                 }
-                // This function now saves to localStorage as a "history" feature, not the main data source
                 const history = JSON.parse(localStorage.getItem('billingHistory')) || [];
                 const periodData = {
                     periodName: state.periodInfo.name,
@@ -653,8 +653,17 @@
                 DOM.historyModal.classList.remove('hidden');
             }
             
-            function exportToPDF() { /* Logic is the same */ }
-            function exportToExcel() { /* Logic is the same */ }
+            function exportToPDF() { /* Logic remains the same */ }
+            function exportToExcel() { /* Logic remains the same */ }
+
+            function debounce(func, delay) {
+                let timeout;
+                return function(...args) {
+                    const context = this;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), delay);
+                };
+            }
 
             async function initializeApp() {
                 await loadState();
