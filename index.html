@@ -4,680 +4,96 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مدیریت هوشمند قبض آب</title>
-
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Jalali Date Picker -->
-    <link rel="stylesheet" href="https://unpkg.com/@majidh1/jalalidatepicker/dist/jalalidatepicker.min.css">
-    <script type="text/javascript" src="https://unpkg.com/@majidh1/jalalidatepicker/dist/jalalidatepicker.min.js"></script>
-    
-    <!-- Vazirmatn Font -->
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
-
-    <style type="text/tailwindcss">
-        @layer components {
-            .action-btn {
-                @apply flex items-center gap-2 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-300 hover:shadow-md transition-all duration-300;
-            }
-            .form-input {
-                @apply w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition;
-            }
-            .menu-item {
-                @apply block w-full text-right px-4 py-2 text-sm hover:bg-gray-100;
-            }
-            .modal-backdrop {
-                @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden;
-            }
-            .modal-content {
-                @apply bg-white rounded-xl shadow-2xl p-6 relative;
-            }
-            .modal-close-btn {
-                @apply absolute top-3 left-4 text-gray-500 hover:text-gray-800 text-2xl font-bold;
-            }
-            .add-tier-btn {
-                @apply mt-3 bg-blue-500 text-white text-sm px-3 py-1 rounded-md hover:bg-blue-600 transition;
-            }
-            .tier-input {
-                @apply p-1 border rounded text-center bg-gray-50 w-24;
-            }
-        }
-    </style>
-    
-    <style>
-        body, input, button, select, textarea {
-            font-family: 'Vazirmatn', sans-serif;
-        }
-        .modal-enter {
-            animation: fadeIn 0.3s ease-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #aab5c0; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #888; }
-        #main-table th, #main-table td { padding: 0.6rem 0.5rem; font-size: 0.9rem; }
-        #main-table input { width: 100%; min-width: 6rem; padding: 0.4rem; font-size: 0.9rem; }
-    </style>
-</head>
-<body class="bg-gray-100 text-gray-800">
-
-    <div id="app" class="container mx-auto p-4 md:p-6 max-w-7xl">
-        
-        <!-- Header -->
-        <header class="flex justify-between items-center mb-6 pb-4 border-b-2 border-blue-600">
-            <div class="flex items-center gap-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path><path d="M12 22.07V12.5l-5.66-5.66"></path></svg>
-                <h1 class="text-2xl md:text-3xl font-bold text-blue-700">مدیریت هوشمند قبض آب</h1>
-            </div>
-            <div class="flex items-center gap-2 relative">
-                <button id="settings-btn" class="action-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                    <span>تنظیمات</span>
-                </button>
-                <button id="history-btn" class="action-btn">
-                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
-                    <span>تاریخچه</span>
-                </button>
-                <div class="relative">
-                    <button id="actions-menu-btn" class="action-btn bg-blue-600 text-white hover:bg-blue-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M3 12h18"></path><path d="M3 18h18"></path></svg>
-                        <span>عملیات</span>
-                    </button>
-                    <div id="actions-menu" class="absolute top-full mt-2 left-0 w-56 bg-white rounded-lg shadow-xl border hidden z-10">
-                        <ul class="text-gray-700">
-                            <li><a href="#" id="save-period-btn" class="menu-item">ذخیره دوره</a></li>
-                            <li><a href="#" id="new-period-btn" class="menu-item">شروع دوره جدید</a></li>
-                            <li class="border-t"></li>
-                            <li><a href="#" id="export-pdf-btn" class="menu-item">خروجی PDF</a></li>
-                            <li><a href="#" id="export-excel-btn" class="menu-item">خروجی Excel</a></li>
-                            <li class="border-t"></li>
-                            <li><a href="#" id="backup-btn" class="menu-item">دریافت پشتیبان</a></li>
-                            <li><label for="restore-input" class="menu-item cursor-pointer">بازیابی پشتیبان</label></li>
-                        </ul>
-                        <input type="file" id="restore-input" accept=".json" class="hidden">
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- Main Content -->
-        <main class="bg-white p-4 md:p-6 rounded-xl shadow-lg">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div>
-                    <label for="period-name" class="font-semibold mb-1 block text-gray-600">نام دوره:</label>
-                    <input type="text" id="period-name" placeholder="مثال: تابستان ۱۴۰۳" class="form-input">
-                </div>
-                <div>
-                    <label for="bill-date" class="font-semibold mb-1 block text-gray-600">تاریخ قبض:</label>
-                    <input type="text" id="bill-date" data-jdp placeholder="تاریخ را انتخاب کنید" class="form-input">
-                </div>
-                <div>
-                    <label for="total-bill-amount" class="font-semibold mb-1 block text-gray-600">مبلغ کل قبض (تومان):</label>
-                    <input type="text" id="total-bill-amount" placeholder="مبلغ کل" inputmode="numeric" class="form-input">
-                </div>
-            </div>
-
-            <div class="overflow-x-auto rounded-lg border">
-                <table id="main-table" class="w-full text-center">
-                    <thead class="bg-gray-700 text-white text-sm">
-                        <tr>
-                            <th class="p-3">واحد</th>
-                            <th class="p-3">نام</th>
-                            <th class="p-3">قرائت قبلی</th>
-                            <th class="p-3">قرائت فعلی</th>
-                            <th class="p-3">مصرف (متر مکعب)</th>
-                            <th class="p-3">پله</th>
-                            <th class="p-3">مبلغ (تومان)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body" class="divide-y divide-gray-200"></tbody>
-                    <tfoot class="font-bold text-white text-sm">
-                        <tr class="bg-gray-600">
-                            <td colspan="4" class="p-3">جمع کل</td>
-                            <td id="total-consumption" class="p-3">۰</td>
-                            <td class="p-3"></td>
-                            <td id="total-calculated-amount" class="p-3">۰</td>
-                        </tr>
-                        <tr class="bg-gray-800">
-                            <td colspan="5" class="p-3">مابه التفاوت</td>
-                            <td colspan="2" id="difference-amount" class="p-3">۰</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        </main>
-    </div>
-
-    <!-- Modals -->
-    <div id="settings-modal" class="modal-backdrop">
-        <div class="modal-content w-full max-w-2xl modal-enter">
-            <button id="close-settings-modal" class="modal-close-btn">&times;</button>
-            <h2 class="text-xl font-bold mb-4 text-gray-800">تنظیمات محاسبه هزینه</h2>
-            <div class="mb-4 p-2 bg-gray-100 rounded-lg flex justify-center gap-4">
-                <label class="cursor-pointer"><input type="radio" name="calc-mode" value="manual" class="ml-1"> پلکانی دستی</label>
-                <label class="cursor-pointer"><input type="radio" name="calc-mode" value="auto" class="ml-1"> تنظیم خودکار</label>
-            </div>
-            <div id="manual-settings">
-                <p class="text-sm text-gray-600 mb-3">تعرفه هر پلکان مصرف را به تومان وارد کنید.</p>
-                <div id="manual-tiers-container" class="overflow-x-auto"></div>
-                <button id="add-manual-tier-btn" class="add-tier-btn">+ افزودن پلکان</button>
-            </div>
-            <div id="auto-settings" class="hidden">
-                <p class="text-sm text-gray-600 mb-3">برای هر پله مصرف، یک ضریب تعریف کنید.</p>
-                <div id="auto-tiers-container" class="overflow-x-auto"></div>
-                <button id="add-auto-tier-btn" class="add-tier-btn">+ افزودن پلکان</button>
-            </div>
-            <hr class="my-6">
-            <button id="save-settings-btn" class="w-full bg-green-600 text-white py-2 rounded-lg shadow hover:bg-green-700 transition">ذخیره تنظیمات</button>
-        </div>
-    </div>
-
-    <div id="history-modal" class="modal-backdrop">
-        <div class="modal-content w-full max-w-2xl max-h-[80vh] flex flex-col modal-enter">
-            <button id="close-history-modal" class="modal-close-btn">&times;</button>
-            <h2 class="text-xl font-bold mb-4 text-gray-800">تاریخچه دوره‌ها</h2>
-            <div id="history-container" class="overflow-y-auto"></div>
-        </div>
-    </div>
-    
-    <div id="message-modal" class="modal-backdrop z-[100]">
-        <div class="modal-content w-full max-w-sm text-center modal-enter">
-            <p id="message-text" class="mb-6 text-gray-700"></p>
-            <div id="message-buttons" class="flex justify-center gap-4"></div>
-        </div>
-    </div>
-
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <h1>مدیریت هوشمند قبض آب</h1>
 
-            // آدرس API که فایل‌های PHP روی آن قرار دارند
-            const API_URL = 'https://group2.storage.c2.liara.space/mahdi_sakhteman/api/';
+    <button id="settingsBtn">تنظیمات</button>
+    <button id="historyBtn">تاریخچه</button>
 
-            // تمام عناصر صفحه که با آنها کار می‌کنیم
-            const DOM = {
-                tableBody: document.getElementById('table-body'),
-                totalConsumption: document.getElementById('total-consumption'),
-                totalCalculatedAmount: document.getElementById('total-calculated-amount'),
-                differenceAmount: document.getElementById('difference-amount'),
-                periodNameInput: document.getElementById('period-name'),
-                billDateInput: document.getElementById('bill-date'),
-                totalBillAmountInput: document.getElementById('total-bill-amount'),
-                settingsModal: document.getElementById('settings-modal'),
-                historyModal: document.getElementById('history-modal'),
-                messageModal: document.getElementById('message-modal'),
-                manualSettings: document.getElementById('manual-settings'),
-                autoSettings: document.getElementById('auto-settings'),
-                manualTiersContainer: document.getElementById('manual-tiers-container'),
-                autoTiersContainer: document.getElementById('auto-tiers-container'),
-                historyContainer: document.getElementById('history-container'),
-                messageText: document.getElementById('message-text'),
-                messageButtons: document.getElementById('message-buttons'),
-                restoreInput: document.getElementById('restore-input'),
-                actionsMenuBtn: document.getElementById('actions-menu-btn'),
-                actionsMenu: document.getElementById('actions-menu'),
-            };
+    <div>
+        <label>نام دوره:</label>
+        <input type="text" id="periodName">
+    </div>
+    <div>
+        <label>تاریخ قبض:</label>
+        <input type="date" id="billDate">
+    </div>
+    <div>
+        <label>مبلغ کل قبض (تومان):</label>
+        <input type="number" id="totalBill" min="0">
+    </div>
 
-            // متغیر اصلی برای نگهداری تمام داده‌های برنامه
-            let state = {};
+    <table id="unitsTable">
+        <thead>
+            <tr>
+                <th>شماره واحد</th>
+                <th>نام واحد</th>
+                <th>قرائت قبلی</th>
+                <th>قرائت فعلی</th>
+                <th>میزان مصرف (متر مکعب)</th>
+                <th>پله مصرف</th>
+                <th>مبلغ (تومان)</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+            <tr>
+                <td colspan="6">جمع کل</td>
+                <td id="totalAmount">0</td>
+            </tr>
+            <tr>
+                <td colspan="6">مابه التفاوت (مبلغ قبض - جمع مبالغ)</td>
+                <td id="difference">0</td>
+            </tr>
+        </tfoot>
+    </table>
 
-            // توابع کمکی برای کار با اعداد فارسی و انگلیسی
-            const toEnglishDigits = str => String(str).replace(/[\u0660-\u0669\u06F0-\u06F9]/g, c => c.charCodeAt(0) & 0xf);
-            const getRawNumber = formattedStr => parseFloat(toEnglishDigits(String(formattedStr)).replace(/[,٬]/g, '')) || 0;
-            const formatNumber = num => isNaN(num) ? '۰' : Math.round(num).toLocaleString('fa-IR');
+    <div>
+        <button id="addUnit">افزودن واحد جدید</button>
+        <button id="savePeriod">ذخیره دوره فعلی</button>
+        <button id="newPeriod">شروع دوره جدید</button>
+        <button id="exportPDF">خروجی PDF</button>
+        <button id="exportExcel">خروجی Excel</button>
+        <button id="importExcel">ورود از Excel</button>
+    </div>
 
-            // تابع نمایش پیام سفارشی
-            function showMessage(text, buttons = [{ text: 'باشه', class: 'bg-blue-500', resolveValue: true }]) {
-                return new Promise(resolve => {
-                    DOM.messageText.textContent = text;
-                    DOM.messageButtons.innerHTML = '';
-                    buttons.forEach(btnInfo => {
-                        const button = document.createElement('button');
-                        button.textContent = btnInfo.text;
-                        button.className = `text-white px-6 py-2 rounded-lg shadow hover:opacity-90 transition ${btnInfo.class}`;
-                        button.onclick = () => { DOM.messageModal.classList.add('hidden'); resolve(btnInfo.resolveValue); };
-                        DOM.messageButtons.appendChild(button);
-                    });
-                    DOM.messageModal.classList.remove('hidden');
-                });
-            }
+    <!-- Modal تنظیمات -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>تنظیمات محاسبه هزینه</h2>
+            <label><input type="radio" name="calcMode" value="manual" checked> پلکانی دستی</label>
+            <label><input type="radio" name="calcMode" value="auto"> تنظیم خودکار</label>
 
-            // ارتباط با سرور برای ذخیره اطلاعات
-            async function saveState() {
-                try {
-                    const response = await fetch(API_URL + 'save_data.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(state),
-                    });
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                } catch (error) {
-                    console.error('Failed to save state to server:', error);
-                    showMessage('خطا در ذخیره اطلاعات در سرور. تغییرات شما ممکن است ذخیره نشود.');
-                }
-            }
+            <div id="manualTiersSection">
+                <p>در این حالت، تعرفه هر پلکان مصرف را به صورت دستی وارد می‌کنید.</p>
+                <div id="manualTiers"></div>
+                <button id="addManualTier">+ افزودن پلکان</button>
+            </div>
 
-            // ارتباط با سرور برای خواندن اطلاعات
-            async function loadState() {
-                try {
-                    const response = await fetch(API_URL + 'get_data.php');
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    const serverState = await response.json();
-                    state = serverState;
-                } catch (error) {
-                    console.error('Failed to load state from server:', error);
-                    showMessage('خطا در ارتباط با سرور. لطفا از اتصال اینترنت خود مطمئن شوید و صفحه را رفرش کنید.');
-                    state = {
-                        units: Array.from({ length: 66 }, (_, i) => ({ id: i + 1, name: i === 64 ? 'عمومی' : (i === 65 ? 'تجاری' : `واحد ${i + 1}`), prev: 0, current: 0 })),
-                        periodInfo: { name: '', date: '', totalBill: 0 },
-                        settings: { calculationMode: 'manual', manualTiers: [], autoTiers: [] }
-                    };
-                }
-            }
-            
-            function render() {
-                renderControls();
-                renderTable();
-                calculateAll();
-            }
+            <div id="autoTiersSection" style="display: none;">
+                <p>در این حالت، برنامه با دریافت ضرایب مصرف، رقم مبنا را طوری محاسبه می‌کند که جمع مبالغ واحدها برابر با مبلغ کل قبض شود.</p>
+                <div id="autoTiers"></div>
+                <button id="addAutoTier">+ افزودن پلکان</button>
+            </div>
 
-            function renderControls() {
-                DOM.periodNameInput.value = state.periodInfo.name;
-                DOM.billDateInput.value = state.periodInfo.date;
-                DOM.totalBillAmountInput.value = state.periodInfo.totalBill > 0 ? formatNumber(state.periodInfo.totalBill) : '';
-            }
+            <button id="saveSettings">ذخیره تنظیمات</button>
+        </div>
+    </div>
 
-            function renderTable() {
-                DOM.tableBody.innerHTML = state.units.map(unit => `
-                    <tr class="text-sm" data-id="${unit.id}">
-                        <td class="p-3">${formatNumber(unit.id)}</td>
-                        <td class="p-3 text-right">${unit.name}</td>
-                        <td class="p-3"><input type="text" inputmode="numeric" class="form-input text-center" data-field="prev" value="${formatNumber(unit.prev)}"></td>
-                        <td class="p-3"><input type="text" inputmode="numeric" class="form-input text-center" data-field="current" value="${formatNumber(unit.current)}"></td>
-                        <td class="p-3 font-semibold consumption-cell">۰</td>
-                        <td class="p-3 tier-cell">-</td>
-                        <td class="p-3 font-bold amount-cell">۰</td>
-                    </tr>
-                `).join('');
-            }
+    <!-- Modal تاریخچه -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>تاریخچه دوره‌ها</h2>
+            <ul id="historyList"></ul>
+        </div>
+    </div>
 
-            function renderSettingsModal() {
-                document.querySelector(`input[name="calc-mode"][value="${state.settings.calculationMode}"]`).checked = true;
-                updateSettingsView();
-                
-                const renderTiers = (container, tiers, mode) => {
-                    const isManual = mode === 'manual';
-                    const headers = `<thead class="bg-gray-100 text-xs text-gray-600"><tr><th class="p-2">پله</th><th class="p-2">از (متر مکعب)</th><th class="p-2">تا (متر مکعب)</th><th class="p-2">${isManual ? 'تعرفه (تومان)' : 'ضریب'}</th><th class="p-2"></th></tr></thead>`;
-                    
-                    const body = tiers.map((tier, index) => {
-                        const fromValue = index === 0 ? 0 : (tiers[index-1]?.to || 0);
-                        return `<tr class="tier">
-                                <td class="p-2 font-bold">${formatNumber(index + 1)}</td>
-                                <td class="p-2"><input type="text" class="tier-input" value="${formatNumber(fromValue)}" readonly></td>
-                                <td class="p-2"><input type="text" inputmode="numeric" class="tier-input" data-tier-field="to" placeholder="∞" value="${tier.to === Infinity ? '' : formatNumber(tier.to)}"></td>
-                                <td class="p-2"><input type="text" inputmode="numeric" class="tier-input" data-tier-field="${isManual ? 'rate' : 'coefficient'}" step="${isManual ? '1' : '0.1'}" value="${tier[isManual ? 'rate' : 'coefficient'] ? formatNumber(tier[isManual ? 'rate' : 'coefficient']) : ''}"></td>
-                                <td class="p-2"><button class="remove-tier-btn text-red-500 hover:text-red-700 font-bold text-xl" data-mode="${mode}" data-index="${index}">&times;</button></td>
-                            </tr>`;
-                    }).join('');
-
-                    container.innerHTML = `<table class="w-full text-center text-sm">${headers}<tbody>${body}</tbody></table>`;
-                };
-                
-                renderTiers(DOM.manualTiersContainer, state.settings.manualTiers, 'manual');
-                renderTiers(DOM.autoTiersContainer, state.settings.autoTiers, 'auto');
-            }
-            
-            function updateSettingsView() {
-                const mode = document.querySelector('input[name="calc-mode"]:checked').value;
-                DOM.manualSettings.style.display = mode === 'manual' ? 'block' : 'none';
-                DOM.autoSettings.style.display = mode === 'auto' ? 'block' : 'none';
-            }
-
-            function calculateAll() {
-                const { units, settings, periodInfo } = state;
-                if (!units || !settings) return; // Guard against undefined state on first load
-                const totalBill = periodInfo.totalBill;
-                let totalConsumption = 0;
-                
-                units.forEach(unit => { unit.consumption = unit.current - unit.prev; });
-                const maxConsumption = Math.max(0, ...units.map(u => u.consumption));
-
-                if (settings.calculationMode === 'manual') {
-                    let totalCalculatedAmount = 0;
-                    units.forEach(unit => {
-                        let cost = 0;
-                        let tierLevel = 'پله ۱';
-                        if (unit.consumption > 0) {
-                            let remaining = unit.consumption;
-                            settings.manualTiers.forEach((tier, index) => {
-                                if (unit.consumption > tier.from) tierLevel = `پله ${formatNumber(index + 1)}`;
-                                if (remaining <= 0) return;
-                                const tierTo = tier.to === 'Infinity' || tier.to === null ? Infinity : tier.to;
-                                const consumptionInTier = Math.min(remaining, tierTo - tier.from);
-                                cost += consumptionInTier * tier.rate;
-                                remaining -= consumptionInTier;
-                            });
-                        }
-                        unit.cost = cost;
-                        unit.tier = tierLevel;
-                        totalCalculatedAmount += cost;
-                    });
-                    
-                    const difference = totalBill - totalCalculatedAmount;
-                    const validConsumption = units.reduce((sum, u) => sum + (u.consumption > 0 ? u.consumption : 0), 0);
-                    units.forEach(unit => {
-                        const adjustment = validConsumption > 0 && unit.consumption > 0 ? (difference / validConsumption) * unit.consumption : 0;
-                        unit.finalCost = Math.max(0, unit.cost + adjustment);
-                    });
-                } else {
-                    let totalWeightedConsumption = 0;
-                    units.forEach(unit => {
-                        let coefficient = 1;
-                        let tierLevel = 'پله ۱';
-                        if (unit.consumption > 0) {
-                            const applicableTier = settings.autoTiers.find((t, i) => {
-                                if (unit.consumption > t.from) tierLevel = `پله ${formatNumber(i + 1)}`;
-                                const tierTo = t.to === 'Infinity' || t.to === null ? Infinity : t.to;
-                                return unit.consumption > t.from && unit.consumption <= tierTo;
-                            }) || settings.autoTiers[settings.autoTiers.length - 1];
-                            if (applicableTier) coefficient = applicableTier.coefficient;
-                        }
-                        unit.tier = tierLevel;
-                        unit.weightedConsumption = Math.max(0, unit.consumption) * coefficient;
-                        totalWeightedConsumption += unit.weightedConsumption;
-                    });
-
-                    const baseRate = totalWeightedConsumption > 0 ? totalBill / totalWeightedConsumption : 0;
-                    units.forEach(unit => { unit.finalCost = unit.weightedConsumption * baseRate; });
-                }
-                
-                let finalTotalAmount = 0;
-                units.forEach(unit => {
-                    const row = DOM.tableBody.querySelector(`tr[data-id='${unit.id}']`);
-                    if (!row) return;
-                    const consumptionCell = row.querySelector('.consumption-cell');
-                    const tierCell = row.querySelector('.tier-cell');
-                    const amountCell = row.querySelector('.amount-cell');
-                    
-                    row.classList.remove('bg-red-100', 'text-red-800');
-                    consumptionCell.style.backgroundColor = 'transparent';
-                    consumptionCell.style.color = 'inherit';
-                    consumptionCell.classList.remove('rounded-md');
-
-                    if (unit.consumption < 0) {
-                        row.classList.add('bg-red-100', 'text-red-800');
-                        consumptionCell.textContent = 'خطا!';
-                        amountCell.textContent = formatNumber(0);
-                        tierCell.textContent = '-';
-                    } else {
-                        totalConsumption += unit.consumption;
-                        finalTotalAmount += unit.finalCost;
-                        consumptionCell.textContent = formatNumber(unit.consumption);
-                        amountCell.textContent = formatNumber(unit.finalCost);
-                        tierCell.textContent = unit.tier;
-
-                        if (maxConsumption > 0 && unit.consumption > 0) {
-                            const ratio = unit.consumption / maxConsumption;
-                            const hue = 120 - (ratio * 120);
-                            consumptionCell.style.backgroundColor = `hsl(${hue}, 80%, 60%)`;
-                            consumptionCell.style.color = 'white';
-                            consumptionCell.classList.add('rounded-md');
-                        }
-                    }
-                });
-
-                DOM.totalConsumption.textContent = formatNumber(totalConsumption);
-                DOM.totalCalculatedAmount.textContent = formatNumber(finalTotalAmount);
-                const finalDifference = totalBill - finalTotalAmount;
-                DOM.differenceAmount.textContent = formatNumber(finalDifference);
-                DOM.differenceAmount.parentElement.className = `font-bold text-white text-sm ${Math.abs(finalDifference) < 1 ? 'bg-green-700' : 'bg-red-700'}`;
-            }
-
-            function setupEventListeners() {
-                const handleNumericInput = (e, callback) => {
-                    const rawValue = getRawNumber(e.target.value);
-                    callback(rawValue);
-                    e.target.value = formatNumber(rawValue);
-                    calculateAll();
-                };
-                
-                const debouncedSave = debounce(saveState, 1000); // Save state 1 second after user stops typing
-
-                DOM.totalBillAmountInput.addEventListener('input', e => handleNumericInput(e, rawValue => { state.periodInfo.totalBill = rawValue; debouncedSave(); }));
-                DOM.periodNameInput.addEventListener('input', e => { state.periodInfo.name = e.target.value; debouncedSave(); });
-                DOM.billDateInput.addEventListener('input', e => { state.periodInfo.date = e.target.value; debouncedSave(); });
-
-                DOM.tableBody.addEventListener('input', e => {
-                    if (e.target.matches('input')) {
-                        const id = parseInt(e.target.closest('tr').dataset.id);
-                        const field = e.target.dataset.field;
-                        const unit = state.units.find(u => u.id === id);
-                        if (unit) {
-                            handleNumericInput(e, rawValue => { unit[field] = rawValue; debouncedSave(); });
-                        }
-                    }
-                });
-                
-                document.getElementById('backup-btn').addEventListener('click', downloadBackup);
-                DOM.restoreInput.addEventListener('change', restoreBackup);
-                document.getElementById('save-period-btn').addEventListener('click', saveCurrentPeriod);
-                document.getElementById('new-period-btn').addEventListener('click', startNewPeriod);
-                document.getElementById('export-pdf-btn').addEventListener('click', exportToPDF);
-                document.getElementById('export-excel-btn').addEventListener('click', exportToExcel);
-                
-                document.getElementById('settings-btn').addEventListener('click', () => { renderSettingsModal(); DOM.settingsModal.classList.remove('hidden'); });
-                document.getElementById('close-settings-modal').addEventListener('click', () => DOM.settingsModal.classList.add('hidden'));
-                document.querySelectorAll('input[name="calc-mode"]').forEach(radio => radio.addEventListener('change', renderSettingsModal));
-                
-                DOM.settingsModal.addEventListener('click', e => {
-                    if (e.target.id === 'add-manual-tier-btn') {
-                        state.settings.manualTiers.push({ from: 0, to: Infinity, rate: 0 });
-                        renderSettingsModal();
-                    } else if (e.target.id === 'add-auto-tier-btn') {
-                        state.settings.autoTiers.push({ from: 0, to: Infinity, coefficient: 1 });
-                        renderSettingsModal();
-                    } else if (e.target.classList.contains('remove-tier-btn')) {
-                        const { mode, index } = e.target.dataset;
-                        state.settings[mode === 'manual' ? 'manualTiers' : 'autoTiers'].splice(index, 1);
-                        renderSettingsModal();
-                    }
-                });
-
-                DOM.settingsModal.addEventListener('input', e => {
-                    if (e.target.matches('.tier-input[data-tier-field]')) {
-                        const rawValue = getRawNumber(e.target.value);
-                        e.target.value = formatNumber(rawValue);
-                    }
-                });
-
-                document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
-                
-                document.getElementById('history-btn').addEventListener('click', showHistory);
-                document.getElementById('close-history-modal').addEventListener('click', () => DOM.historyModal.classList.add('hidden'));
-
-                DOM.actionsMenuBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    DOM.actionsMenu.classList.toggle('hidden');
-                });
-                document.addEventListener('click', (e) => {
-                    if (!DOM.actionsMenuBtn.contains(e.target) && !DOM.actionsMenu.contains(e.target)) {
-                        DOM.actionsMenu.classList.add('hidden');
-                    }
-                });
-                DOM.actionsMenu.addEventListener('click', () => DOM.actionsMenu.classList.add('hidden'));
-            }
-
-            function saveSettings() {
-                state.settings.calculationMode = document.querySelector('input[name="calc-mode"]:checked').value;
-                const saveTiersFromContainer = (container, tierArray) => {
-                    tierArray.length = 0;
-                    container.querySelectorAll('.tier').forEach(row => {
-                        const from = getRawNumber(row.cells[1].querySelector('input').value);
-                        const toStr = row.cells[2].querySelector('input').value;
-                        const to = toStr === '' || toStr === '∞' ? Infinity : getRawNumber(toStr);
-                        const tier = { from, to };
-                        const valueInput = row.cells[3].querySelector('input');
-                        if (state.settings.calculationMode === 'manual') {
-                            tier.rate = getRawNumber(valueInput.value);
-                        } else {
-                            tier.coefficient = getRawNumber(valueInput.value);
-                        }
-                        tierArray.push(tier);
-                    });
-                };
-                saveTiersFromContainer(DOM.manualTiersContainer, state.settings.manualTiers);
-                saveTiersFromContainer(DOM.autoTiersContainer, state.settings.autoTiers);
-                saveState();
-                calculateAll();
-                DOM.settingsModal.classList.add('hidden');
-                showMessage('تنظیمات با موفقیت ذخیره شد.');
-            }
-
-            function downloadBackup() {
-                const dataStr = JSON.stringify(state, null, 2);
-                const dataBlob = new Blob([dataStr], { type: 'application/json' });
-                const url = URL.createObjectURL(dataBlob);
-                const link = document.createElement('a');
-                const jalaliDate = new Date().toLocaleDateString('fa-IR-u-nu-latn').replace(/\//g, '-');
-                link.download = `پشتیبان آب - ${jalaliDate}.json`;
-                link.href = url;
-                link.click();
-                URL.revokeObjectURL(url);
-                showMessage('فایل پشتیبان با موفقیت دانلود شد.');
-            }
-
-            async function restoreBackup(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-                const confirmed = await showMessage('آیا مطمئن هستید؟ تمام اطلاعات فعلی با اطلاعات فایل پشتیبان جایگزین خواهد شد.', [
-                    { text: 'بله، بازیابی کن', class: 'bg-orange-500', resolveValue: true },
-                    { text: 'خیر', class: 'bg-slate-500', resolveValue: false }
-                ]);
-                if (!confirmed) { event.target.value = ''; return; }
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    try {
-                        const restoredState = JSON.parse(e.target.result);
-                        if (restoredState.units && restoredState.settings && restoredState.periodInfo) {
-                            state = restoredState;
-                            saveState();
-                            render();
-                            await showMessage('اطلاعات با موفقیت بازیابی شد.');
-                        } else { throw new Error('Invalid file structure'); }
-                    } catch (error) {
-                        await showMessage('خطا در بازیابی اطلاعات. لطفاً از یک فایل پشتیبان معتبر استفاده کنید.');
-                    } finally { event.target.value = ''; }
-                };
-                reader.readAsText(file);
-            }
-            
-            async function saveCurrentPeriod() {
-                if (!state.periodInfo.name || !state.periodInfo.date) {
-                    await showMessage('لطفاً نام دوره و تاریخ قبض را مشخص کنید.');
-                    return;
-                }
-                const history = JSON.parse(localStorage.getItem('billingHistory')) || [];
-                const periodData = {
-                    periodName: state.periodInfo.name,
-                    billDate: state.periodInfo.date,
-                    totalBill: state.periodInfo.totalBill,
-                    totalConsumption: getRawNumber(DOM.totalConsumption.textContent),
-                    units: JSON.parse(JSON.stringify(state.units))
-                };
-                const existingIndex = history.findIndex(p => p.periodName === periodData.periodName);
-                if (existingIndex > -1) {
-                    history[existingIndex] = periodData;
-                } else {
-                    history.push(periodData);
-                }
-                localStorage.setItem('billingHistory', JSON.stringify(history));
-                await showMessage(`دوره "${state.periodInfo.name}" با موفقیت در تاریخچه ذخیره شد.`);
-            }
-
-            async function startNewPeriod() {
-                const confirmed = await showMessage('آیا مطمئن هستید؟ قرائت فعلی به عنوان قرائت قبلی ثبت می‌شود.', [
-                    { text: 'بله، دوره جدید', class: 'bg-green-500', resolveValue: true },
-                    { text: 'خیر', class: 'bg-red-500', resolveValue: false }
-                ]);
-                if (!confirmed) return;
-
-                state.units.forEach(unit => { unit.prev = unit.current; unit.current = 0; });
-                state.periodInfo = { name: '', date: '', totalBill: 0 };
-                await saveState(); // Save the new "prev" values to the server
-                render();
-                await showMessage('دوره جدید با موفقیت آغاز شد.');
-            }
-
-            function showHistory() {
-                const history = JSON.parse(localStorage.getItem('billingHistory')) || [];
-                if (history.length === 0) {
-                    DOM.historyContainer.innerHTML = '<p class="text-center text-slate-500">هنوز دوره‌ای ذخیره نشده است.</p>';
-                } else {
-                    DOM.historyContainer.innerHTML = `<ul class="space-y-3">${history.slice().reverse().map(p => `
-                        <li class="p-3 bg-slate-100 rounded-lg flex justify-between items-center">
-                            <div>
-                                <strong class="text-slate-800">${p.periodName} (${p.billDate})</strong>
-                                <div class="text-sm text-slate-600">
-                                    <span>مصرف کل: ${formatNumber(p.totalConsumption)}</span> | 
-                                    <span>مبلغ کل: ${formatNumber(p.totalBill)} تومان</span>
-                                </div>
-                            </div>
-                            <button class="load-history-btn text-sm bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600" data-period-name="${p.periodName}">بارگذاری</button>
-                        </li>`).join('')}</ul>`;
-                    DOM.historyContainer.querySelectorAll('.load-history-btn').forEach(btn => btn.addEventListener('click', async e => {
-                        const confirmed = await showMessage('آیا می‌خواهید این دوره بارگذاری شود؟ اطلاعات فعلی با اطلاعات این دوره جایگزین و در سرور ذخیره خواهد شد.', [
-                            { text: 'بله', class: 'bg-green-500', resolveValue: true },
-                            { text: 'خیر', class: 'bg-red-500', resolveValue: false }
-                        ]);
-                        if(confirmed){
-                            const periodToLoad = history.find(p => p.periodName === e.target.dataset.periodName);
-                            if (periodToLoad) {
-                                state.units = periodToLoad.units;
-                                state.periodInfo = { name: periodToLoad.periodName, date: periodToLoad.billDate, totalBill: periodToLoad.totalBill };
-                                await saveState(); // Save the loaded history state to the server
-                                render();
-                                DOM.historyModal.classList.add('hidden');
-                            }
-                        }
-                    }));
-                }
-                DOM.historyModal.classList.remove('hidden');
-            }
-            
-            function exportToPDF() { /* Logic remains the same */ }
-            function exportToExcel() { /* Logic remains the same */ }
-
-            function debounce(func, delay) {
-                let timeout;
-                return function(...args) {
-                    const context = this;
-                    clearTimeout(timeout);
-                    timeout = setTimeout(() => func.apply(context, args), delay);
-                };
-            }
-
-            async function initializeApp() {
-                await loadState();
-                setupEventListeners();
-                render();
-                jalaliDatepicker.startWatch({ 
-                    persianDigits: true,
-                    showTodayBtn: true,
-                    showEmptyBtn: true,
-                });
-            }
-
-            initializeApp();
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>

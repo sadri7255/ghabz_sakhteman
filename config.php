@@ -1,7 +1,7 @@
 <?php
 // این هدر به فایل‌های شما که روی گیت‌هاب هستند اجازه می‌دهد به این سرور دسترسی داشته باشند
 // !!! مهم: حتما آدرس گیت‌هاب خود را جایگزین کنید
-header("Access-Control-Allow-Origin: https://YOUR_GITHUB_USERNAME.github.io");
+header("Access-Control-Allow-Origin: https://sadri7255.github.io");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=utf-8");
