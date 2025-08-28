@@ -258,14 +258,22 @@
                 try {
                     const response = await fetch(API_URL + endpoint, options);
                     if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({ message: 'خطای ناشناخته در سرور' }));
-                        throw new Error(errorData.message || `Network response was not ok (${response.status})`);
+                        const errorText = await response.text();
+                        throw new Error(errorText || `Network response was not ok (${response.status})`);
                     }
-                    return response.json();
+                    // [اصلاح شده] ابتدا پاسخ را به عنوان متن می‌خوانیم
+                    const responseText = await response.text();
+                    // سپس متن را به عنوان JSON پارس می‌کنیم
+                    return JSON.parse(responseText);
                 } catch (error) {
                     console.error(`API call to ${endpoint} failed:`, error);
-                    showMessage(`خطا در ارتباط با سرور: ${error.message}. لطفاً اتصال اینترنت خود را بررسی کنید.`);
-                    throw error; // Re-throw to stop further execution if critical
+                    let errorMessage = `خطا در ارتباط با سرور: ${error.message}. لطفاً اتصال اینترنت خود را بررسی کنید.`;
+                    // اگر خطا از سمت پارس کردن JSON باشد، پیام بهتری نمایش می‌دهیم
+                    if (error instanceof SyntaxError) {
+                        errorMessage = "پاسخ دریافت شده از سرور در فرمت صحیح (JSON) نیست.";
+                    }
+                    showMessage(errorMessage);
+                    throw error;
                 }
             }
 
