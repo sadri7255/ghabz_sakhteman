@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدیریت هوشمند قبض آب</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Jalali Date Picker -->
+    <link rel="stylesheet" href="https://unpkg.com/@majidh1/jalalidatepicker/dist/jalalidatepicker.min.css">
+    <script type="text/javascript" src="https://unpkg.com/@majidh1/jalalidatepicker/dist/jalalidatepicker.min.js"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div id="app" class="container mx-auto p-4 md:p-6 max-w-7xl">
+        
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-6 pb-4 border-b-2 border-blue-600">
+            <div class="flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path><path d="M12 22.07V12.5l-5.66-5.66"></path></svg>
+                <h1 class="text-2xl md:text-3xl font-bold text-blue-700">مدیریت هوشمند قبض آب</h1>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="settings-btn" class="action-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    <span>تنظیمات</span>
+                </button>
+                <button id="history-btn" class="action-btn">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+                    <span>تاریخچه</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="bg-white p-4 md:p-6 rounded-xl shadow-lg">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div>
+                    <label for="period-name" class="font-semibold mb-1 block text-gray-600">نام دوره:</label>
+                    <input type="text" id="period-name" placeholder="مثال: تابستان ۱۴۰۳" class="form-input">
+                </div>
+                <div>
+                    <label for="bill-date" class="font-semibold mb-1 block text-gray-600">تاریخ قبض:</label>
+                    <input type="text" id="bill-date" data-jdp placeholder="تاریخ را انتخاب کنید" class="form-input">
+                </div>
+                <div>
+                    <label for="total-bill-amount" class="font-semibold mb-1 block text-gray-600">مبلغ کل قبض (تومان):</label>
+                    <input type="text" id="total-bill-amount" placeholder="مبلغ کل" inputmode="numeric" class="form-input">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-lg border">
+                <table id="main-table" class="w-full text-center">
+                    <thead class="bg-gray-700 text-white text-sm">
+                        <tr>
+                            <th class="p-3">واحد</th>
+                            <th class="p-3">نام</th>
+                            <th class="p-3">قرائت قبلی</th>
+                            <th class="p-3">قرائت فعلی</th>
+                            <th class="p-3">مصرف (متر مکعب)</th>
+                            <th class="p-3">پله</th>
+                            <th class="p-3">مبلغ (تومان)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-gray-200"></tbody>
+                    <tfoot class="font-bold text-white text-sm">
+                        <tr class="bg-gray-600">
+                            <td colspan="4" class="p-3">جمع کل</td>
+                            <td id="total-consumption" class="p-3">۰</td>
+                            <td class="p-3"></td>
+                            <td id="total-calculated-amount" class="p-3">۰</td>
+                        </tr>
+                        <tr class="bg-gray-800">
+                            <td colspan="5" class="p-3">مابه التفاوت</td>
+                            <td colspan="2" id="difference-amount" class="p-3">۰</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Actions Menu -->
+            <div class="mt-6 flex justify-center relative">
+                <button id="actions-menu-btn" class="bg-blue-600 text-white px-6 py-2.5 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M3 12h18"></path><path d="M3 18h18"></path></svg>
+                    عملیات
+                </button>
+                <div id="actions-menu" class="absolute bottom-full mb-2 w-56 bg-white rounded-lg shadow-xl border hidden">
+                    <ul class="text-gray-700">
+                        <li><a href="#" id="save-period-btn" class="menu-item">ذخیره دوره</a></li>
+                        <li><a href="#" id="new-period-btn" class="menu-item">شروع دوره جدید</a></li>
+                        <li class="border-t"></li>
+                        <li><a href="#" id="export-pdf-btn" class="menu-item">خروجی PDF</a></li>
+                        <li><a href="#" id="export-excel-btn" class="menu-item">خروجی Excel</a></li>
+                        <li class="border-t"></li>
+                        <li><a href="#" id="backup-btn" class="menu-item">دریافت پشتیبان</a></li>
+                        <li><label for="restore-input" class="menu-item cursor-pointer">بازیابی پشتیبان</label></li>
+                    </ul>
+                    <input type="file" id="restore-input" accept=".json" class="hidden">
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="settings-modal" class="modal-backdrop">
+        <div class="modal-content w-full max-w-2xl">
+            <button id="close-settings-modal" class="modal-close-btn">&times;</button>
+            <h2 class="text-xl font-bold mb-4 text-gray-800">تنظیمات محاسبه هزینه</h2>
+            <div class="mb-4 p-2 bg-gray-100 rounded-lg flex justify-center gap-4">
+                <label class="cursor-pointer"><input type="radio" name="calc-mode" value="manual" class="ml-1"> پلکانی دستی</label>
+                <label class="cursor-pointer"><input type="radio" name="calc-mode" value="auto" class="ml-1"> تنظیم خودکار</label>
+            </div>
+            <div id="manual-settings">
+                <p class="text-sm text-gray-600 mb-3">تعرفه هر پلکان مصرف را به تومان وارد کنید.</p>
+                <div id="manual-tiers-container" class="overflow-x-auto"></div>
+                <button id="add-manual-tier-btn" class="add-tier-btn">+ افزودن پلکان</button>
+            </div>
+            <div id="auto-settings" class="hidden">
+                <p class="text-sm text-gray-600 mb-3">برای هر پله مصرف، یک ضریب تعریف کنید.</p>
+                <div id="auto-tiers-container" class="overflow-x-auto"></div>
+                <button id="add-auto-tier-btn" class="add-tier-btn">+ افزودن پلکان</button>
+            </div>
+            <hr class="my-6">
+            <button id="save-settings-btn" class="w-full bg-green-600 text-white py-2 rounded-lg shadow hover:bg-green-700 transition">ذخیره تنظیمات</button>
+        </div>
+    </div>
+
+    <div id="history-modal" class="modal-backdrop">
+        <div class="modal-content w-full max-w-2xl max-h-[80vh] flex flex-col">
+            <button id="close-history-modal" class="modal-close-btn">&times;</button>
+            <h2 class="text-xl font-bold mb-4 text-gray-800">تاریخچه دوره‌ها</h2>
+            <div id="history-container" class="overflow-y-auto"></div>
+        </div>
+    </div>
+    
+    <div id="message-modal" class="modal-backdrop z-[100]">
+        <div class="modal-content w-full max-w-sm text-center">
+            <p id="message-text" class="mb-6 text-gray-700"></p>
+            <div id="message-buttons" class="flex justify-center gap-4"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
