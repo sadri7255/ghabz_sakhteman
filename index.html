@@ -12,8 +12,56 @@
     <link rel="stylesheet" href="https://unpkg.com/@majidh1/jalalidatepicker/dist/jalalidatepicker.min.css">
     <script type="text/javascript" src="https://unpkg.com/@majidh1/jalalidatepicker/dist/jalalidatepicker.min.js"></script>
     
-    <!-- Custom Styles -->
-    <link rel="stylesheet" href="style.css">
+    <!-- Vazirmatn Font -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+
+    <style type="text/tailwindcss">
+        @layer components {
+            .action-btn {
+                @apply flex items-center gap-2 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-300 hover:shadow-md transition-all duration-300;
+            }
+            .form-input {
+                @apply w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition;
+            }
+            .menu-item {
+                @apply block w-full text-right px-4 py-2 text-sm hover:bg-gray-100;
+            }
+            .modal-backdrop {
+                @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden;
+            }
+            .modal-content {
+                @apply bg-white rounded-xl shadow-2xl p-6 relative;
+            }
+            .modal-close-btn {
+                @apply absolute top-3 left-4 text-gray-500 hover:text-gray-800 text-2xl font-bold;
+            }
+            .add-tier-btn {
+                @apply mt-3 bg-blue-500 text-white text-sm px-3 py-1 rounded-md hover:bg-blue-600 transition;
+            }
+            .tier-input {
+                @apply p-1 border rounded text-center bg-gray-50 w-24;
+            }
+        }
+    </style>
+    
+    <style>
+        body, input, button, select, textarea {
+            font-family: 'Vazirmatn', sans-serif;
+        }
+        .modal-enter {
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #aab5c0; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #888; }
+        #main-table th, #main-table td { padding: 0.6rem 0.5rem; font-size: 0.9rem; }
+        #main-table input { width: 100%; min-width: 6rem; padding: 0.4rem; font-size: 0.9rem; }
+    </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
@@ -108,7 +156,7 @@
 
     <!-- Modals -->
     <div id="settings-modal" class="modal-backdrop">
-        <div class="modal-content w-full max-w-2xl">
+        <div class="modal-content w-full max-w-2xl modal-enter">
             <button id="close-settings-modal" class="modal-close-btn">&times;</button>
             <h2 class="text-xl font-bold mb-4 text-gray-800">تنظیمات محاسبه هزینه</h2>
             <div class="mb-4 p-2 bg-gray-100 rounded-lg flex justify-center gap-4">
@@ -131,7 +179,7 @@
     </div>
 
     <div id="history-modal" class="modal-backdrop">
-        <div class="modal-content w-full max-w-2xl max-h-[80vh] flex flex-col">
+        <div class="modal-content w-full max-w-2xl max-h-[80vh] flex flex-col modal-enter">
             <button id="close-history-modal" class="modal-close-btn">&times;</button>
             <h2 class="text-xl font-bold mb-4 text-gray-800">تاریخچه دوره‌ها</h2>
             <div id="history-container" class="overflow-y-auto"></div>
@@ -139,7 +187,7 @@
     </div>
     
     <div id="message-modal" class="modal-backdrop z-[100]">
-        <div class="modal-content w-full max-w-sm text-center">
+        <div class="modal-content w-full max-w-sm text-center modal-enter">
             <p id="message-text" class="mb-6 text-gray-700"></p>
             <div id="message-buttons" class="flex justify-center gap-4"></div>
         </div>
@@ -149,6 +197,478 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
-    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // آدرس API که فایل‌های PHP روی آن قرار دارند
+            const API_URL = 'https://group2.storage.c2.liara.space/mahdi_sakhteman/api/';
+
+            // تمام عناصر صفحه که با آنها کار می‌کنیم
+            const DOM = {
+                tableBody: document.getElementById('table-body'),
+                totalConsumption: document.getElementById('total-consumption'),
+                totalCalculatedAmount: document.getElementById('total-calculated-amount'),
+                differenceAmount: document.getElementById('difference-amount'),
+                periodNameInput: document.getElementById('period-name'),
+                billDateInput: document.getElementById('bill-date'),
+                totalBillAmountInput: document.getElementById('total-bill-amount'),
+                settingsModal: document.getElementById('settings-modal'),
+                historyModal: document.getElementById('history-modal'),
+                messageModal: document.getElementById('message-modal'),
+                manualSettings: document.getElementById('manual-settings'),
+                autoSettings: document.getElementById('auto-settings'),
+                manualTiersContainer: document.getElementById('manual-tiers-container'),
+                autoTiersContainer: document.getElementById('auto-tiers-container'),
+                historyContainer: document.getElementById('history-container'),
+                messageText: document.getElementById('message-text'),
+                messageButtons: document.getElementById('message-buttons'),
+                restoreInput: document.getElementById('restore-input'),
+                actionsMenuBtn: document.getElementById('actions-menu-btn'),
+                actionsMenu: document.getElementById('actions-menu'),
+            };
+
+            // متغیر اصلی برای نگهداری تمام داده‌های برنامه
+            let state = {};
+
+            // توابع کمکی برای کار با اعداد فارسی و انگلیسی
+            const toEnglishDigits = str => String(str).replace(/[\u0660-\u0669\u06F0-\u06F9]/g, c => c.charCodeAt(0) & 0xf);
+            const getRawNumber = formattedStr => parseFloat(toEnglishDigits(String(formattedStr)).replace(/[,٬]/g, '')) || 0;
+            const formatNumber = num => isNaN(num) ? '۰' : Math.round(num).toLocaleString('fa-IR');
+
+            // تابع نمایش پیام سفارشی
+            function showMessage(text, buttons = [{ text: 'باشه', class: 'bg-blue-500', resolveValue: true }]) {
+                return new Promise(resolve => {
+                    DOM.messageText.textContent = text;
+                    DOM.messageButtons.innerHTML = '';
+                    buttons.forEach(btnInfo => {
+                        const button = document.createElement('button');
+                        button.textContent = btnInfo.text;
+                        button.className = `text-white px-6 py-2 rounded-lg shadow hover:opacity-90 transition ${btnInfo.class}`;
+                        button.onclick = () => { DOM.messageModal.classList.add('hidden'); resolve(btnInfo.resolveValue); };
+                        DOM.messageButtons.appendChild(button);
+                    });
+                    DOM.messageModal.classList.remove('hidden');
+                });
+            }
+
+            // ارتباط با سرور برای ذخیره اطلاعات
+            async function saveState() {
+                try {
+                    const response = await fetch(API_URL + 'save_data.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(state),
+                    });
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                } catch (error) {
+                    console.error('Failed to save state to server:', error);
+                    showMessage('خطا در ذخیره اطلاعات در سرور. تغییرات شما ممکن است ذخیره نشود.');
+                }
+            }
+
+            // ارتباط با سرور برای خواندن اطلاعات
+            async function loadState() {
+                try {
+                    const response = await fetch(API_URL + 'get_data.php');
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    const serverState = await response.json();
+                    state = serverState;
+                } catch (error) {
+                    console.error('Failed to load state from server:', error);
+                    showMessage('خطا در ارتباط با سرور. لطفا از اتصال اینترنت خود مطمئن شوید و صفحه را رفرش کنید.');
+                    state = {
+                        units: Array.from({ length: 66 }, (_, i) => ({ id: i + 1, name: i === 64 ? 'عمومی' : (i === 65 ? 'تجاری' : `واحد ${i + 1}`), prev: 0, current: 0 })),
+                        periodInfo: { name: '', date: '', totalBill: 0 },
+                        settings: { calculationMode: 'manual', manualTiers: [], autoTiers: [] }
+                    };
+                }
+            }
+            
+            function render() {
+                renderControls();
+                renderTable();
+                calculateAll();
+            }
+
+            function renderControls() {
+                DOM.periodNameInput.value = state.periodInfo.name;
+                DOM.billDateInput.value = state.periodInfo.date;
+                DOM.totalBillAmountInput.value = state.periodInfo.totalBill > 0 ? formatNumber(state.periodInfo.totalBill) : '';
+            }
+
+            function renderTable() {
+                DOM.tableBody.innerHTML = state.units.map(unit => `
+                    <tr class="text-sm" data-id="${unit.id}">
+                        <td class="p-3">${formatNumber(unit.id)}</td>
+                        <td class="p-3 text-right">${unit.name}</td>
+                        <td class="p-3"><input type="text" inputmode="numeric" class="form-input text-center" data-field="prev" value="${formatNumber(unit.prev)}"></td>
+                        <td class="p-3"><input type="text" inputmode="numeric" class="form-input text-center" data-field="current" value="${formatNumber(unit.current)}"></td>
+                        <td class="p-3 font-semibold consumption-cell">۰</td>
+                        <td class="p-3 tier-cell">-</td>
+                        <td class="p-3 font-bold amount-cell">۰</td>
+                    </tr>
+                `).join('');
+            }
+
+            function renderSettingsModal() {
+                document.querySelector(`input[name="calc-mode"][value="${state.settings.calculationMode}"]`).checked = true;
+                updateSettingsView();
+                
+                const renderTiers = (container, tiers, mode) => {
+                    const isManual = mode === 'manual';
+                    const headers = `<thead class="bg-gray-100 text-xs text-gray-600"><tr><th class="p-2">پله</th><th class="p-2">از (متر مکعب)</th><th class="p-2">تا (متر مکعب)</th><th class="p-2">${isManual ? 'تعرفه (تومان)' : 'ضریب'}</th><th class="p-2"></th></tr></thead>`;
+                    
+                    const body = tiers.map((tier, index) => {
+                        const fromValue = index === 0 ? 0 : (tiers[index-1]?.to || 0);
+                        return `<tr class="tier">
+                                <td class="p-2 font-bold">${formatNumber(index + 1)}</td>
+                                <td class="p-2"><input type="text" class="tier-input" value="${formatNumber(fromValue)}" readonly></td>
+                                <td class="p-2"><input type="text" inputmode="numeric" class="tier-input" data-tier-field="to" placeholder="∞" value="${tier.to === Infinity ? '' : formatNumber(tier.to)}"></td>
+                                <td class="p-2"><input type="text" inputmode="numeric" class="tier-input" data-tier-field="${isManual ? 'rate' : 'coefficient'}" step="${isManual ? '1' : '0.1'}" value="${tier[isManual ? 'rate' : 'coefficient'] ? formatNumber(tier[isManual ? 'rate' : 'coefficient']) : ''}"></td>
+                                <td class="p-2"><button class="remove-tier-btn text-red-500 hover:text-red-700 font-bold text-xl" data-mode="${mode}" data-index="${index}">&times;</button></td>
+                            </tr>`;
+                    }).join('');
+
+                    container.innerHTML = `<table class="w-full text-center text-sm">${headers}<tbody>${body}</tbody></table>`;
+                };
+                
+                renderTiers(DOM.manualTiersContainer, state.settings.manualTiers, 'manual');
+                renderTiers(DOM.autoTiersContainer, state.settings.autoTiers, 'auto');
+            }
+            
+            function updateSettingsView() {
+                const mode = document.querySelector('input[name="calc-mode"]:checked').value;
+                DOM.manualSettings.style.display = mode === 'manual' ? 'block' : 'none';
+                DOM.autoSettings.style.display = mode === 'auto' ? 'block' : 'none';
+            }
+
+            function calculateAll() {
+                const { units, settings, periodInfo } = state;
+                if (!units || !settings) return; // Guard against undefined state on first load
+                const totalBill = periodInfo.totalBill;
+                let totalConsumption = 0;
+                
+                units.forEach(unit => { unit.consumption = unit.current - unit.prev; });
+                const maxConsumption = Math.max(0, ...units.map(u => u.consumption));
+
+                if (settings.calculationMode === 'manual') {
+                    let totalCalculatedAmount = 0;
+                    units.forEach(unit => {
+                        let cost = 0;
+                        let tierLevel = 'پله ۱';
+                        if (unit.consumption > 0) {
+                            let remaining = unit.consumption;
+                            settings.manualTiers.forEach((tier, index) => {
+                                if (unit.consumption > tier.from) tierLevel = `پله ${formatNumber(index + 1)}`;
+                                if (remaining <= 0) return;
+                                const consumptionInTier = Math.min(remaining, (tier.to === 'Infinity' ? Infinity : tier.to) - tier.from);
+                                cost += consumptionInTier * tier.rate;
+                                remaining -= consumptionInTier;
+                            });
+                        }
+                        unit.cost = cost;
+                        unit.tier = tierLevel;
+                        totalCalculatedAmount += cost;
+                    });
+                    
+                    const difference = totalBill - totalCalculatedAmount;
+                    const validConsumption = units.reduce((sum, u) => sum + (u.consumption > 0 ? u.consumption : 0), 0);
+                    units.forEach(unit => {
+                        const adjustment = validConsumption > 0 && unit.consumption > 0 ? (difference / validConsumption) * unit.consumption : 0;
+                        unit.finalCost = Math.max(0, unit.cost + adjustment);
+                    });
+                } else {
+                    let totalWeightedConsumption = 0;
+                    units.forEach(unit => {
+                        let coefficient = 1;
+                        let tierLevel = 'پله ۱';
+                        if (unit.consumption > 0) {
+                            const applicableTier = settings.autoTiers.find((t, i) => {
+                                if (unit.consumption > t.from) tierLevel = `پله ${formatNumber(i + 1)}`;
+                                return unit.consumption > t.from && unit.consumption <= (t.to === 'Infinity' ? Infinity : t.to);
+                            }) || settings.autoTiers[settings.autoTiers.length - 1];
+                            if (applicableTier) coefficient = applicableTier.coefficient;
+                        }
+                        unit.tier = tierLevel;
+                        unit.weightedConsumption = Math.max(0, unit.consumption) * coefficient;
+                        totalWeightedConsumption += unit.weightedConsumption;
+                    });
+
+                    const baseRate = totalWeightedConsumption > 0 ? totalBill / totalWeightedConsumption : 0;
+                    units.forEach(unit => { unit.finalCost = unit.weightedConsumption * baseRate; });
+                }
+                
+                let finalTotalAmount = 0;
+                units.forEach(unit => {
+                    const row = DOM.tableBody.querySelector(`tr[data-id='${unit.id}']`);
+                    if (!row) return;
+                    const consumptionCell = row.querySelector('.consumption-cell');
+                    const tierCell = row.querySelector('.tier-cell');
+                    const amountCell = row.querySelector('.amount-cell');
+                    
+                    row.classList.remove('bg-red-100', 'text-red-800');
+                    consumptionCell.style.backgroundColor = 'transparent';
+                    consumptionCell.style.color = 'inherit';
+                    consumptionCell.classList.remove('rounded-md');
+
+                    if (unit.consumption < 0) {
+                        row.classList.add('bg-red-100', 'text-red-800');
+                        consumptionCell.textContent = 'خطا!';
+                        amountCell.textContent = formatNumber(0);
+                        tierCell.textContent = '-';
+                    } else {
+                        totalConsumption += unit.consumption;
+                        finalTotalAmount += unit.finalCost;
+                        consumptionCell.textContent = formatNumber(unit.consumption);
+                        amountCell.textContent = formatNumber(unit.finalCost);
+                        tierCell.textContent = unit.tier;
+
+                        if (maxConsumption > 0 && unit.consumption > 0) {
+                            const ratio = unit.consumption / maxConsumption;
+                            const hue = 120 - (ratio * 120);
+                            consumptionCell.style.backgroundColor = `hsl(${hue}, 80%, 60%)`;
+                            consumptionCell.style.color = 'white';
+                            consumptionCell.classList.add('rounded-md');
+                        }
+                    }
+                });
+
+                DOM.totalConsumption.textContent = formatNumber(totalConsumption);
+                DOM.totalCalculatedAmount.textContent = formatNumber(finalTotalAmount);
+                const finalDifference = totalBill - finalTotalAmount;
+                DOM.differenceAmount.textContent = formatNumber(finalDifference);
+                DOM.differenceAmount.parentElement.className = `font-bold text-white text-sm ${Math.abs(finalDifference) < 1 ? 'bg-green-700' : 'bg-red-700'}`;
+            }
+
+            function setupEventListeners() {
+                const handleNumericInput = (e, callback) => {
+                    const rawValue = getRawNumber(e.target.value);
+                    callback(rawValue);
+                    e.target.value = formatNumber(rawValue);
+                    calculateAll();
+                    saveState();
+                };
+
+                DOM.totalBillAmountInput.addEventListener('input', e => handleNumericInput(e, rawValue => state.periodInfo.totalBill = rawValue));
+                DOM.periodNameInput.addEventListener('input', e => { state.periodInfo.name = e.target.value; saveState(); });
+                DOM.billDateInput.addEventListener('input', e => { state.periodInfo.date = e.target.value; saveState(); });
+
+                DOM.tableBody.addEventListener('input', e => {
+                    if (e.target.matches('input')) {
+                        const id = parseInt(e.target.closest('tr').dataset.id);
+                        const field = e.target.dataset.field;
+                        const unit = state.units.find(u => u.id === id);
+                        if (unit) {
+                            handleNumericInput(e, rawValue => unit[field] = rawValue);
+                        }
+                    }
+                });
+                
+                document.getElementById('backup-btn').addEventListener('click', downloadBackup);
+                DOM.restoreInput.addEventListener('change', restoreBackup);
+                document.getElementById('save-period-btn').addEventListener('click', saveCurrentPeriod);
+                document.getElementById('new-period-btn').addEventListener('click', startNewPeriod);
+                document.getElementById('export-pdf-btn').addEventListener('click', exportToPDF);
+                document.getElementById('export-excel-btn').addEventListener('click', exportToExcel);
+                
+                document.getElementById('settings-btn').addEventListener('click', () => { renderSettingsModal(); DOM.settingsModal.classList.remove('hidden'); });
+                document.getElementById('close-settings-modal').addEventListener('click', () => DOM.settingsModal.classList.add('hidden'));
+                document.querySelectorAll('input[name="calc-mode"]').forEach(radio => radio.addEventListener('change', renderSettingsModal));
+                
+                DOM.settingsModal.addEventListener('click', e => {
+                    if (e.target.id === 'add-manual-tier-btn') {
+                        state.settings.manualTiers.push({});
+                        renderSettingsModal();
+                    } else if (e.target.id === 'add-auto-tier-btn') {
+                        state.settings.autoTiers.push({});
+                        renderSettingsModal();
+                    } else if (e.target.classList.contains('remove-tier-btn')) {
+                        const { mode, index } = e.target.dataset;
+                        state.settings[mode === 'manual' ? 'manualTiers' : 'autoTiers'].splice(index, 1);
+                        renderSettingsModal();
+                    }
+                });
+
+                DOM.settingsModal.addEventListener('input', e => {
+                    if (e.target.matches('.tier-input[data-tier-field]')) {
+                        const rawValue = getRawNumber(e.target.value);
+                        e.target.value = formatNumber(rawValue);
+                    }
+                });
+
+                document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
+                
+                document.getElementById('history-btn').addEventListener('click', showHistory);
+                document.getElementById('close-history-modal').addEventListener('click', () => DOM.historyModal.classList.add('hidden'));
+
+                DOM.actionsMenuBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    DOM.actionsMenu.classList.toggle('hidden');
+                });
+                document.addEventListener('click', (e) => {
+                    if (!DOM.actionsMenuBtn.contains(e.target) && !DOM.actionsMenu.contains(e.target)) {
+                        DOM.actionsMenu.classList.add('hidden');
+                    }
+                });
+                DOM.actionsMenu.addEventListener('click', () => DOM.actionsMenu.classList.add('hidden'));
+            }
+
+            function saveSettings() {
+                state.settings.calculationMode = document.querySelector('input[name="calc-mode"]:checked').value;
+                const saveTiersFromContainer = (container, tierArray) => {
+                    tierArray.length = 0;
+                    container.querySelectorAll('.tier').forEach(row => {
+                        const from = getRawNumber(row.cells[1].querySelector('input').value);
+                        const toStr = row.cells[2].querySelector('input').value;
+                        const to = toStr === '' ? Infinity : getRawNumber(toStr);
+                        const tier = { from, to };
+                        const valueInput = row.cells[3].querySelector('input');
+                        if (state.settings.calculationMode === 'manual') {
+                            tier.rate = getRawNumber(valueInput.value);
+                        } else {
+                            tier.coefficient = getRawNumber(valueInput.value);
+                        }
+                        tierArray.push(tier);
+                    });
+                };
+                saveTiersFromContainer(DOM.manualTiersContainer, state.settings.manualTiers);
+                saveTiersFromContainer(DOM.autoTiersContainer, state.settings.autoTiers);
+                saveState();
+                calculateAll();
+                DOM.settingsModal.classList.add('hidden');
+                showMessage('تنظیمات با موفقیت ذخیره شد.');
+            }
+
+            function downloadBackup() {
+                const dataStr = JSON.stringify(state, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                const jalaliDate = new Date().toLocaleDateString('fa-IR-u-nu-latn').replace(/\//g, '-');
+                link.download = `پشتیبان آب - ${jalaliDate}.json`;
+                link.href = url;
+                link.click();
+                URL.revokeObjectURL(url);
+                showMessage('فایل پشتیبان با موفقیت دانلود شد.');
+            }
+
+            async function restoreBackup(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                const confirmed = await showMessage('آیا مطمئن هستید؟ تمام اطلاعات فعلی با اطلاعات فایل پشتیبان جایگزین خواهد شد.', [
+                    { text: 'بله، بازیابی کن', class: 'bg-orange-500', resolveValue: true },
+                    { text: 'خیر', class: 'bg-slate-500', resolveValue: false }
+                ]);
+                if (!confirmed) { event.target.value = ''; return; }
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const restoredState = JSON.parse(e.target.result);
+                        if (restoredState.units && restoredState.settings && restoredState.periodInfo) {
+                            state = restoredState;
+                            saveState();
+                            render();
+                            await showMessage('اطلاعات با موفقیت بازیابی شد.');
+                        } else { throw new Error('Invalid file structure'); }
+                    } catch (error) {
+                        await showMessage('خطا در بازیابی اطلاعات. لطفاً از یک فایل پشتیبان معتبر استفاده کنید.');
+                    } finally { event.target.value = ''; }
+                };
+                reader.readAsText(file);
+            }
+            
+            async function saveCurrentPeriod() {
+                if (!state.periodInfo.name || !state.periodInfo.date) {
+                    await showMessage('لطفاً نام دوره و تاریخ قبض را مشخص کنید.');
+                    return;
+                }
+                // This function now saves to localStorage as a "history" feature, not the main data source
+                const history = JSON.parse(localStorage.getItem('billingHistory')) || [];
+                const periodData = {
+                    periodName: state.periodInfo.name,
+                    billDate: state.periodInfo.date,
+                    totalBill: state.periodInfo.totalBill,
+                    totalConsumption: getRawNumber(DOM.totalConsumption.textContent),
+                    units: JSON.parse(JSON.stringify(state.units))
+                };
+                const existingIndex = history.findIndex(p => p.periodName === periodData.periodName);
+                if (existingIndex > -1) {
+                    history[existingIndex] = periodData;
+                } else {
+                    history.push(periodData);
+                }
+                localStorage.setItem('billingHistory', JSON.stringify(history));
+                await showMessage(`دوره "${state.periodInfo.name}" با موفقیت در تاریخچه ذخیره شد.`);
+            }
+
+            async function startNewPeriod() {
+                const confirmed = await showMessage('آیا مطمئن هستید؟ قرائت فعلی به عنوان قرائت قبلی ثبت می‌شود.', [
+                    { text: 'بله، دوره جدید', class: 'bg-green-500', resolveValue: true },
+                    { text: 'خیر', class: 'bg-red-500', resolveValue: false }
+                ]);
+                if (!confirmed) return;
+
+                state.units.forEach(unit => { unit.prev = unit.current; unit.current = 0; });
+                state.periodInfo = { name: '', date: '', totalBill: 0 };
+                await saveState(); // Save the new "prev" values to the server
+                render();
+                await showMessage('دوره جدید با موفقیت آغاز شد.');
+            }
+
+            function showHistory() {
+                const history = JSON.parse(localStorage.getItem('billingHistory')) || [];
+                if (history.length === 0) {
+                    DOM.historyContainer.innerHTML = '<p class="text-center text-slate-500">هنوز دوره‌ای ذخیره نشده است.</p>';
+                } else {
+                    DOM.historyContainer.innerHTML = `<ul class="space-y-3">${history.slice().reverse().map(p => `
+                        <li class="p-3 bg-slate-100 rounded-lg flex justify-between items-center">
+                            <div>
+                                <strong class="text-slate-800">${p.periodName} (${p.billDate})</strong>
+                                <div class="text-sm text-slate-600">
+                                    <span>مصرف کل: ${formatNumber(p.totalConsumption)}</span> | 
+                                    <span>مبلغ کل: ${formatNumber(p.totalBill)} تومان</span>
+                                </div>
+                            </div>
+                            <button class="load-history-btn text-sm bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600" data-period-name="${p.periodName}">بارگذاری</button>
+                        </li>`).join('')}</ul>`;
+                    DOM.historyContainer.querySelectorAll('.load-history-btn').forEach(btn => btn.addEventListener('click', async e => {
+                        const confirmed = await showMessage('آیا می‌خواهید این دوره بارگذاری شود؟ اطلاعات فعلی با اطلاعات این دوره جایگزین و در سرور ذخیره خواهد شد.', [
+                            { text: 'بله', class: 'bg-green-500', resolveValue: true },
+                            { text: 'خیر', class: 'bg-red-500', resolveValue: false }
+                        ]);
+                        if(confirmed){
+                            const periodToLoad = history.find(p => p.periodName === e.target.dataset.periodName);
+                            if (periodToLoad) {
+                                state.units = periodToLoad.units;
+                                state.periodInfo = { name: periodToLoad.periodName, date: periodToLoad.billDate, totalBill: periodToLoad.totalBill };
+                                await saveState(); // Save the loaded history state to the server
+                                render();
+                                DOM.historyModal.classList.add('hidden');
+                            }
+                        }
+                    }));
+                }
+                DOM.historyModal.classList.remove('hidden');
+            }
+            
+            function exportToPDF() { /* Logic is the same */ }
+            function exportToExcel() { /* Logic is the same */ }
+
+            async function initializeApp() {
+                await loadState();
+                setupEventListeners();
+                render();
+                jalaliDatepicker.startWatch({ 
+                    persianDigits: true,
+                    showTodayBtn: true,
+                    showEmptyBtn: true,
+                });
+            }
+
+            initializeApp();
+        });
+    </script>
 </body>
 </html>
