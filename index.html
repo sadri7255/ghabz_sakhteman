@@ -257,18 +257,16 @@
             async function apiCall(endpoint, options = {}) {
                 try {
                     const response = await fetch(API_URL + endpoint, options);
+                    const responseText = await response.text(); // Always read as text first
                     if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error(errorText || `Network response was not ok (${response.status})`);
+                        // Throw the raw text as error, it might be XML or something else
+                        throw new Error(responseText || `Network response was not ok (${response.status})`);
                     }
-                    // [اصلاح شده] ابتدا پاسخ را به عنوان متن می‌خوانیم
-                    const responseText = await response.text();
-                    // سپس متن را به عنوان JSON پارس می‌کنیم
+                    // Try to parse as JSON, if it fails, the catch block will handle it
                     return JSON.parse(responseText);
                 } catch (error) {
                     console.error(`API call to ${endpoint} failed:`, error);
                     let errorMessage = `خطا در ارتباط با سرور: ${error.message}. لطفاً اتصال اینترنت خود را بررسی کنید.`;
-                    // اگر خطا از سمت پارس کردن JSON باشد، پیام بهتری نمایش می‌دهیم
                     if (error instanceof SyntaxError) {
                         errorMessage = "پاسخ دریافت شده از سرور در فرمت صحیح (JSON) نیست.";
                     }
